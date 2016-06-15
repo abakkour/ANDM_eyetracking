@@ -1,8 +1,9 @@
-function cat_training(subjectID,use_eyetracker,block)
+function cat_training(subjectID,order,use_eyetracker,block)
 
 % = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 % =============== Created based on the previous boost codes ===============
 % ==================== by Tom Salomon, September 2014 =====================
+% ================= modified by Akram Bakkour, June 2016 ==================
 % = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 % This function runs the boost (cue-approach) training session,
@@ -52,70 +53,14 @@ function cat_training(subjectID,use_eyetracker,block)
 % Ladder2IN = 750;
 
 
-% Screen('Preference', 'SkipSyncTests', 1);
-
-
-% Assign order
-% --------------------------
-% give order value of '1' or '2' for subjects with odd or even ID, respectively
-if mod(subjectID_num,2) == 1 % subject code is odd
-    order = 1;
-else % subject code is even
-    order = 2;
-end
-
-sessionNum=1; % session number (1 if first for this subject)
-
-% sessionNum = input('Enter session number (1 if first for this subject): ');
-% while isempty(sessionNum) || sum(oksessionNum==sessionNum)~=1
-%     disp('ERROR: input must be 1 or 2 or 3 . Please try again.');
-%     sessionNum = input('Enter session number (1 if first for this subject): ');
-% end
-
-
-% =========================================================================
-% set the computer and path
-% =========================================================================
-
-% test_comp = input('Which computer are you using? 5 MacBookPro1, 4 new mac, 3 Rotem_PC, 2 Toms_iMac, 1 MRI, 0 if testooom: ');
-% while isempty(test_comp) || sum(okComputer==test_comp)~=1
-%     disp('ERROR: input must be 0,1,2,3,4 or 5. Please try again.');
-%     test_comp = input('Which computer are you using? 5 MacBookPro1, 4 new mac, 3 Rotem_PC, 2 Toms_iMac, 1 MRI, 0 if testooom: ');
-% end
-test_comp=1; % 5 MacBookPro1, 4 new mac, 3 Rotem_PC, 2 Toms_iMac, 1 MRI, 0 if testooom
-% Get block number
 mainPath=pwd;
-
-block = input('Which Block are you at: ');
-while isempty(block) || sum(okBlock==block)~=1
-    disp('ERROR: invalid input. Please try again.');
-    block = input('Which Block are you at: ');
-end
-
-okEyetracker = [1 0];
-ask_if_want_eyetracker = input('Do you want eyetracking (1 - yes, 0 - no): ');
-    while isempty(ask_if_want_eyetracker) || sum(okEyetracker == ask_if_want_eyetracker) ~=1
-        disp('ERROR: input must be 1 or 0. Please try again.');
-        ask_if_want_eyetracker = input('Do you want eyetracking (1 - yes, 0 - no): ');
-    end
-use_eyetracker=ask_if_want_eyetracker; % set to 1/0 to turn on/off eyetracker functions
-
 
 % Set the number of run per block
 num_runs_per_block = 2;
 % Set the index of the first run in the current block
 runInd=(block-1)*num_runs_per_block+1;
 % Set the total number of in the experiment
-total_number_of_runs=16;
-
-%---------------------------------------------------------
-%%  'SCRIPT VERSION'
-%---------------------------------------------------------
-% notes = ('Design developed by Schonberg, Bakkour and Poldrack, inspired by Boynton');
-script_name = 'Boost_behavioral_Israel';
-script_version='1';
-revision_date='11-18-2014';
-fprintf('%s %s (revised %s)\n',script_name,script_version,revision_date);
+total_number_of_runs=12;
 
 %---------------------------------------------------------------
 %%   'GLOBAL VARIABLES'
@@ -136,29 +81,19 @@ timestamp = [date,'_',hr,'h',minutes,'m'];
 Step = 50;
 
 % about timing
-image_duration = 1; %because stim duration is 1.5 secs in opt_stop
+image_duration = 1; 
 baseline_fixation = 2;
-afterrunfixation = 7;
-
-% -----------------------------------------------
-%% Load Instructions
-% -----------------------------------------------
-
-% Load Hebrew instructions image files
-Instructions=dir([mainPath '/Instructions/fmri_training.JPG' ]);
-Instructions_name=struct2cell(rmfield(Instructions,{'date','bytes','isdir','datenum'}));
-Instructions_image=imread([mainPath '/Instructions/' sprintf(Instructions_name{1})]);
+afterrunfixation = 4;
 
 % -----------------------------------------------
 %% 'INITIALIZE SCREEN'
 % -----------------------------------------------
 
-
 Screen('Preference', 'VisualDebuglevel', 3); %No PTB intro screen
-screennum = max(Screen('Screens'));
+Screen('Preference', 'SkipSyncTests', 1); %FOR TESTING ONLY
+screennum = min(Screen('Screens'));
 
 pixelSize=32;
-% [w] = Screen('OpenWindow',screennum,[],[0 0 800 700],pixelSize);% %debugging screensize
 [w] = Screen('OpenWindow',screennum,[],[],pixelSize);
 
 %   colors
@@ -182,23 +117,11 @@ HideCursor;
 
 
 %%---------------------------------------------------------------
-%%  'FEEDBACK VARIABLES'
+%%  Set up buttons
 %%---------------------------------------------------------------
 
-if test_comp == 1
-    blue = 'b';
-    yellow = 'y';
-    %     %     trigger = KbName('t');
-    %     blue = KbName('b');
-    %     yellow = KbName('y');
-    %     %     green = KbName('g');
-    %     %     red = KbName('r');
-    %     %     LEFT = [98 5 10];   % blue (5) green (10)
-    %     %     RIGHT = [121 28 21]; % yellow (28) red (21)
-else
-    BUTTON = 98; %[197];  %<
-    %RIGHT = [110]; %[198]; %>
-end; % end if test_comp == 1
+BUTTON = 98; %KbName('b'); %listening to 'b' button press
+test_comp=2; %1 for scanner, but need to add additional button mappings
 
 %---------------------------------------------------------------
 %%   'PRE-TRIAL DATA ORGANIZATION'
@@ -242,7 +165,7 @@ if use_eyetracker
         return;
     end;
     
-    [v vs]=Eyelink('GetTrackerVersion');
+    [~,vs]=Eyelink('GetTrackerVersion');
     fprintf('Running experiment on a ''%s'' tracker.\n', vs );
     
     % make sure that we get gaze data from the Eyelink
@@ -310,45 +233,16 @@ end
 %---------------------------------------------------------------
 %% 'Display Main Instructions'
 %---------------------------------------------------------------
-KbQueueCreate;
+
 Screen('TextSize',w, 40);
 
-if block ==1 % if this is the first block, present full instructions
-    Screen('PutImage',w,Instructions_image);
-else
-    CenterText(w,'Another run begins now', white, 0,0);
-    CenterText(w,'Press any key to continue', Green, 0,150);
-end
+CenterText(w,'Press button `b` on keyboard every time your hear a beep.', white, 0,0);
+CenterText(w,'Press any key to continue', Green, 0,150);
 
 Screen(w,'Flip');
 WaitSecs(0.01);
 
-noresp = 1;
-while noresp,
-    [keyIsDown] = KbCheck(-1); % deviceNumber=keyboard
-    if keyIsDown && noresp,
-        noresp = 0;
-    end;
-end
-
-if test_comp == 1
-    CenterText(w,'GET READY! Waiting for trigger', white, 0, 0);
-    Screen('Flip',w);
-    
-    % escapeKey = KbName('space');
-    escapeKey = KbName('t');
-    while 1
-        [keyIsDown,~,keyCode] = KbCheck(-1);
-        max(keyCode)
-        if keyIsDown && keyCode(escapeKey)
-            break;
-        end
-    end
-    
-    DisableKeysForKbCheck(KbName('t')); % So trigger is no longer detected
-    
-end; % end if test_comp == 1
-DisableKeysForKbCheck(KbName('t')); % So trigger is no longer detected
+KbPressWait(-1); % wait for participant to continue
 
 WaitSecs(0.01);
 
@@ -435,8 +329,8 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
     minutes = sprintf('%02d', c(5));
     timestamp = [date,'_',hr,'h',minutes,'m'];
     
-    fid1 = fopen([outputPath '/' subjectID '_training_run_' sprintf('%02d',runNum) '_' timestamp '.txt'], 'a');
-    fprintf(fid1,'subjectID\t order\t runNum\t itemName\t onsetTime\t shuff_trialType\t RT\t respInTime\t AudioTime\t response\t fixationTime\t ladder1\t ladder2\t bidIndex\t itemNameIndex\t bidValue\t \n'); %write the header line
+    fid1 = fopen([outputPath '/' subjectID '_cat_training_run_' sprintf('%02d',runNum) '_' timestamp '.txt'], 'a');
+    fprintf(fid1,'subjectID\t order\t runNum\t itemName\t onsetTime\t shuff_trialType\t RT\t respInTime\t AudioTime\t response\t fixationTime\t ladder1\t ladder2\t ratingIndex\t itemNameIndex\t rating\t \n'); %write the header line
     
     
     %   'pre-trial fixation'
@@ -501,7 +395,7 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
         Ladder1IN=750;
         Ladder2IN=750;
     else % read the ladders from the previous run's txt file
-        last_run=dir(sprintf('%s/%s_training_run_%02d_*.txt',outputPath,subjectID,runNum-1));
+        last_run=dir(sprintf('%s/%s_cat_training_run_%02d_*.txt',outputPath,subjectID,runNum-1));
         clear last_run_fid last_run_data
         last_run_fid=fopen([outputPath,'/',last_run(end).name]);
         last_run_data=textscan(last_run_fid,'%s %f %f %s %f %f %f %f %f %f %f %f %f %f %f %f','HeaderLines',1);
@@ -1018,9 +912,7 @@ outfile = strcat(outputPath, '/', subjectID,'_training_run', sprintf('%02d',runN
 run_info.subject = subjectID;
 run_info.date = date;
 run_info.outfile = outfile;
-run_info.script_version = script_version;
-run_info.revision_date = revision_date;
-run_info.script_name = mfilename;
+%run_info.script_name = mfilename;
 clear Images Instructions_image;
 
 save(outfile);
@@ -1084,15 +976,6 @@ WaitSecs(4);
 KbQueueFlush;
 Screen('CloseAll');
 ShowCursor;
-
-
-
-if runInd<total_number_of_runs
-    fprintf(['\nyour next block is: ' num2str(block+1),'\n\n']);
-    block=block+1;
-else
-    disp('continue to next part');
-end
 
 clear all
 
