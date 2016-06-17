@@ -1,4 +1,4 @@
-function [trialsPerRun] = cat_form_probe_pairs(subjectID, order, numRuns)
+function cat_form_probe_pairs(subjectID, order, numRuns)
 
 % function [trialsPerRun] = cat_form_probe_pairs(subjectID, order, numRuns)
 %
@@ -54,7 +54,7 @@ block=1;
 %   'read in sorted file'
 % - - - - - - - - - - - - - - - - -
 
-file = dir([mainPath '/Output/' subjectID '_stopGoList_allstim_order' num2str(order) '*']);
+file = dir([mainPath '/Output/' subjectID '_rated_food_allstim_order' num2str(order) '*']);
 fid = fopen([mainPath '/Output/' sprintf(file(length(file)).name)]);
 data = textscan(fid, '%s %d %d %f %d') ;% these contain everything from the sortbdm
 stimName = data{1};
