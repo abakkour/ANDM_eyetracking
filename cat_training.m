@@ -129,7 +129,7 @@ test_comp=2; %1 for scanner, but need to add additional button mappings
 
 %   'Reading in the sorted BDM list - defines which items will be GO\NOGO'
 % - - - - - - - - - - - - - - -
-file = dir([outputPath '/' subjectID '_stopGoList_trainingstim.txt']);
+file = dir([outputPath '/' subjectID '_cat_stopGoList_trainingstim.txt']);
 fid = fopen([outputPath '/' sprintf(file(length(file)).name)]);
 vars = textscan(fid, '%s %d %d %f %d') ;% these contain everything from the sortbdm
 fclose(fid);
