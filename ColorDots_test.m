@@ -37,7 +37,12 @@ ColorDots_init_path;
 % Initialization
 scr = 0;
 background_color = 0;
-win = Screen('OpenWindow', scr, background_color);
+[win, windowRect] = Screen('OpenWindow', scr, background_color);
+[xCenter, yCenter] = RectCenter(windowRect);
+
+buffer=20; %20 pixel buffer zone around rects of interest
+dotsRect=CenterRectOnPointd([0 0 400+buffer 400+buffer], xCenter, yCenter);
+
 
 green=[0 255 0];
 white=[255 255 255];
@@ -45,7 +50,9 @@ black=[0 0 0];
 
 KbQueueCreate;
 HideCursor;
-ListenChar(2);
+
+trial_time_fixated_dots=999;
+trial_num_dots_fixations=999;
 
 if eye==1
     %==============================================
@@ -80,7 +87,7 @@ if eye==1
     % exit program if this fails.
     if ~EyelinkInit(dummymode, 1)
         fprintf('Eyelink Init aborted.\n');
-t        cleanup;  % cleanup function
+        cleanup;  % cleanup function
         return;
     end;
     
@@ -152,6 +159,8 @@ t        cleanup;  % cleanup function
     % Finish Initialization %
     %%%%%%%%%%%%%%%%%%%%%%%%%
 end
+
+ListenChar(2);
 
 switch scan
     case 1
@@ -257,7 +266,7 @@ WaitSecs(2);
 fid1=fopen(['Output/' subjid '_dots_test_run_' num2str(run) '_' timestamp '.txt'], 'a');
 
 %write the header line
-fprintf(fid1,'subjid\t scanner\t test_comp\t experimenter\t runtrial\t onsettime\t color_coh\t prop\t response\t outcome\t disptime\t RT\t button_order\n');
+fprintf(fid1,'subjid\t scanner\t test_comp\t experimenter\t runtrial\t onsettime\t color_coh\t prop\t response\t outcome\t disptime\t RT\t button_order\t time_fix_dots\t tnum_dots_fix\n');
 
 % Iterating trials
 for trial=1:n_trial;
@@ -292,6 +301,58 @@ for trial=1:n_trial;
             % - - - - - - -
             onsetmessage=strcat('Trial ',num2str(trial),' Onset = ',num2str(t_fr(fr)-runStart));
             Eyelink('Message',onsetmessage);
+            
+            trial_time_fixated_dots = 0;
+            trial_num_dots_fixations = 0;
+            
+            % current_area determines which area eye is in (left, right, neither)
+            % xpos and ypos are used for eyepos_debug
+            [current_area, ~, ~] = get_current_fixation_area(dummymode,el,eye_used,dotsRect);
+            
+            % last_area will track what area the eye was in on the previous loop
+            % iteration, so we can determine when a change occurs
+            % fixation_onset_time stores the time a "fixation" into an area began
+            first_fixation_duration = 0;
+            first_fixation_area = current_area; % this will report 'n' in output if they never looked at an object
+            first_fixation_flag = (first_fixation_area=='f'); % flags 1 once the first fixation has occurred, 2 once the first fixation has been processed
+            last_area=current_area;
+            fixation_onset_time = GetSecs;
+        elseif eye==1 && fr > 1
+            % get eye position
+            [current_area, ~, ~] = get_current_fixation_area(dummymode,el,eye_used,dotsRect);
+            
+            % they are looking in a new area
+            % Currently has initial fixation problems? (color, count, etc.)
+            if current_area~=last_area
+                % update timings
+                switch last_area
+                    case 'f'
+                        trial_time_fixated_dots = trial_time_fixated_dots + (GetSecs-fixation_onset_time);
+                        trial_num_dots_fixations = trial_num_dots_fixations + 1;
+                end
+                
+                fixation_onset_time=GetSecs;
+                
+                % they have looked away from their first fixation: record its
+                % duration and the target (food/scale)
+                if(first_fixation_flag==1)
+                    %outstr=['first fixation lasted ' GetSecs-first_fixation_onset ' seconds'];
+                    %Eyelink('Message',outstr);
+                    first_fixation_duration = GetSecs-first_fixation_onset;
+                    first_fixation_flag = 2;
+                end
+                
+                % this is their first time fixating on an object this trial
+                if(first_fixation_flag==0 && current_area=='f')
+                    %outstr=['first fixation on ' last_area];
+                    %Eyelink('Message',outstr);
+                    first_fixation_flag = 1;
+                    first_fixation_onset = fixation_onset_time;
+                    first_fixation_area = current_area;
+                end
+            end
+            last_area = current_area;
+            fixation_duration = GetSecs-fixation_onset_time;
         end
         
         [keyIsDown, firstPress] = KbQueueCheck;
@@ -315,6 +376,19 @@ for trial=1:n_trial;
         % - - - - - - -
         rtmsg = strcat('RT = ',num2str(t_fr(end) - t_fr(1)));
         Eyelink('Message',rtmsg);
+        
+        switch last_area
+            case 'd'
+                trial_time_fixated_dots = trial_time_fixated_dots + fixation_duration;
+                trial_num_dots_fixations = trial_num_dots_fixations + 1;
+        end
+        % time limit reached while fixating on first fixated object
+        if(first_fixation_flag==1)
+            %outstr=['first fixation lasted ' GetSecs-first_fixation_onset ' seconds'];
+            %Eyelink('Message',outstr);
+            first_fixation_duration = GetSecs-first_fixation_onset;
+            first_fixation_flag = 2;
+        end
     end
     
     info{trial} = Dots.finish_trial;
@@ -345,7 +419,9 @@ for trial=1:n_trial;
     info{trial}.outcome=outcome;
     outcomes(trial)=outcome;
     
-    fprintf(fid1,'%s\t %d\t %s\t %s\t %d\t %f\t %f\t %f\t %s\t %d\t %f\t %f\t %d\n', subjid, scan, test_comp, exp_init, trial, t_fr(1)-runStart, color_coh, prop, keyPressed, outcome, info{trial}.disptime, info{trial}.rt, button_order);
+    fprintf(fid1,'%s\t %d\t %s\t %s\t %d\t %f\t %f\t %f\t %s\t %d\t %f\t %f\t %d\t %.4f\t %d\n', ...
+        subjid, scan, test_comp, exp_init, trial, t_fr(1)-runStart, color_coh, prop, keyPressed, outcome, info{trial}.disptime, info{trial}.rt, button_order, ...
+        trial_time_fixated_dots, trial_num_dots_fixations);
     
     if keyPressed=='x'
         CenterText(win,'TOO SLOW!',white,0,0);
@@ -450,4 +526,28 @@ Screen('CloseAll');
 % Restore keyboard output to Matlab:
 %ListenChar(0);
 ShowCursor;
+end
+
+function [current_area,  xpos, ypos] = get_current_fixation_area(dummymode,el,eye_used,dotsRect)
+xpos = 0;
+ypos = 0;
+if ~dummymode
+    evt=Eyelink('NewestFloatSample');
+    x=evt.gx(eye_used+1);
+    y=evt.gy(eye_used+1);
+    if(x~=el.MISSING_DATA && y~=el.MISSING_DATA && evt.pa(eye_used+1)>0)
+        xpos=x;
+        ypos=y;
+    end
+else % in dummy mode use mousecoordinates
+    [xpos,ypos] = GetMouse;
+end
+
+% check what area the eye is in
+if IsInRect(xpos,ypos,dotsRect)
+    current_area='d';
+else
+    current_area='n';
+end
+return
 end
