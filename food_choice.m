@@ -101,6 +101,16 @@ fixationTime = zeros(trialsPerRun,1); % for later saving fixation times for each
 % define the size factor by which the image size and the distance between the images will be reduced
 sizeFactor = 1;
 
+trial_time_fixated_left = 999;
+trial_time_fixated_right = 999;
+trial_time_fixated_mid = 999;
+trial_num_left_fixations = 999;
+trial_num_right_fixations = 999;
+trial_num_mid_fixations = 999;
+first_fixation_duration = 999;
+first_fixation_area = 'x';
+
+
 %==============================================
 %% 'INITIALIZE Screen variables'
 %==============================================
@@ -203,6 +213,8 @@ stackW= sizeFactor*size(Images{1},2);
 distcent = 300*sizeFactor; % half of the distance between the images
 leftRect = [xcenter-stackW-distcent ycenter-stackH/2 xcenter-distcent ycenter+stackH/2];
 rightRect = [xcenter+distcent ycenter-stackH/2 xcenter+stackW+distcent ycenter+stackH/2];
+midRect = [xcenter-150 ycenter-150 xcenter+150 ycenter+150];
+
 
 %   'load onsets'
 % - - - - - - - - - - - - - - -
@@ -213,8 +225,8 @@ onsetlist = 0:3.5:245; %70 trials at 3.5 sec per trial
 %-----------------------------------------------------------------
 
 fid1 = fopen([outputPath '/' subjectID sprintf('_food_choice_run%d_', numRun) timestamp '.txt'], 'a');
-fprintf(fid1,'subjectID\trun\ttrial\tonsettime\tImageLeft\tImageRight\tratingOrderLeft\tratingOrderRight\tIsleftHV\tResponse\tPairNumber\tOutcome\tRT\tratingLeft\tratingRight\t\fixationTime\t\n'); %write the header line
-
+fprintf(fid1,'subjectID\trun\ttrial\tonsettime\tImageLeft\tImageRight\tratingOrderLeft\tratingOrderRight\tIsleftHV\tResponse\tPairNumber\tOutcome\tRT\tratingLeft\tratingRight\t\fixationTime\ttimeFixMid\ttimeFixLeft\ttimeFixRight\tnumMidFix\tnumLeftFix\tnumRightFix\tfirstFix\tfirstFixTime\n'); %write the header line    
+    
 %-----------------------------------------------------------------
 %% Initializing eye tracking system %
 %-----------------------------------------------------------------
@@ -394,6 +406,28 @@ for trial = 1:trialsPerRun
         %   Eyelink MSG
         % ---------------------------
         Eyelink('Message',eyelink_message);
+        trial_time_fixated_left = 0;
+        trial_time_fixated_right = 0;
+        trial_time_fixated_mid = 0;
+        trial_num_left_fixations = 0;
+        trial_num_right_fixations = 0;
+        trial_num_mid_fixations = 0;
+        
+        % current_area determines which area eye is in (left, right, neither)
+        % xpos and ypos are used for eyepos_debug
+        [current_area, ~, ~] = get_current_fixation_area(dummymode,el,eye_used,midRect,leftRect,rightRect);
+        
+        % last_area will track what area the eye was in on the previous loop
+        % iteration, so we can determine when a change occurs
+        % fixation_onset_time stores the time a "fixation" into an area began
+        last_area=current_area;
+        fixation_onset_time = GetSecs;
+        
+        % tracking first fixation
+        first_fixation_duration = 0;
+        first_fixation_area = current_area; % this will report 'n' in output if they never looked at an object
+        first_fixation_flag = (first_fixation_area=='m' || first_fixation_area=='l' || first_fixation_area=='r'); % flags 1 once the first fixation has occurred, 2 once the first fixation has been processed
+        first_fixation_onset = fixation_onset_time;
     end
     
     CenterText(w,'+', white,0,0);
@@ -437,6 +471,50 @@ for trial = 1:trialsPerRun
             end
         end % end if keyIsDown && noresp
         
+        if use_eyetracker==1
+            % get eye position
+            [current_area, ~, ~] = get_current_fixation_area(dummymode,el,eye_used,midRect,leftRect,rightRect);
+            
+            % they are looking in a new area
+            % Currently has initial fixation problems? (color, count, etc.)
+            if current_area~=last_area
+                % update timings
+                switch last_area
+                    case 'm'
+                        trial_time_fixated_mid = trial_time_fixated_mid + (GetSecs-fixation_onset_time);
+                        trial_num_mid_fixations = trial_num_mid_fixations + 1;
+                    case 'l'
+                        trial_time_fixated_left = trial_time_fixated_left + (GetSecs-fixation_onset_time);
+                        trial_num_left_fixations = trial_num_left_fixations + 1;
+                    case 'r'
+                        trial_time_fixated_right = trial_time_fixated_right + (GetSecs-fixation_onset_time);
+                        trial_num_right_fixations = trial_num_right_fixations + 1;
+                end
+                
+                fixation_onset_time=GetSecs;
+                
+                % they have looked away from their first fixation: record its
+                % duration and the target (left/right)
+                if(first_fixation_flag==1)
+                    %outstr=['first fixation lasted ' GetSecs-first_fixation_onset ' seconds'];
+                    %Eyelink('Message',outstr);
+                    first_fixation_duration = GetSecs-first_fixation_onset;
+                    first_fixation_flag = 2;
+                end
+                
+                % this is their first time fixating on an object this trial
+                if(first_fixation_flag==0 && (current_area=='m' || current_area=='l' || current_area=='r'))
+                    %outstr=['first fixation on ' last_area];
+                    %Eyelink('Message',outstr);
+                    first_fixation_flag = 1;
+                    first_fixation_onset = fixation_onset_time;
+                    first_fixation_area = current_area;
+                end
+            end
+            
+            last_area = current_area;
+            fixation_duration = GetSecs-fixation_onset_time;
+        end
         
         % check for reaching time limit
         if noresp && GetSecs-runStart >= onsetlist(runtrial)+baseline_fixation+maxtime
@@ -449,6 +527,30 @@ for trial = 1:trialsPerRun
     %-----------------------------------------------------------------
     % determine what bid to highlight
     %-----------------------------------------------------------------
+    if use_eyetracker==1
+        % Eyelink msg
+        % - - - - - - -
+        rtmsg = strcat('RT = ',num2str(respTime));
+        Eyelink('Message',rtmsg);
+        switch last_area
+            case 'm'
+                trial_time_fixated_mid = trial_time_fixated_mid + fixation_duration;
+                trial_num_mid_fixations = trial_num_mid_fixations + 1;
+            case 'l'
+                trial_time_fixated_left = trial_time_fixated_left + fixation_duration;
+                trial_num_left_fixations = trial_num_left_fixations + 1;
+            case 'r'
+                trial_time_fixated_right = trial_time_fixated_right + fixation_duration;
+                trial_num_right_fixations = trial_num_right_fixations + 1;
+        end
+        % time limit reached while fixating on first fixated object
+        if(first_fixation_flag==1)
+            %outstr=['first fixation lasted ' GetSecs-first_fixation_onset ' seconds'];
+            %Eyelink('Message',outstr);
+            first_fixation_duration = GetSecs-first_fixation_onset;
+            first_fixation_flag = 2;
+        end
+    end
     
     switch keyPressed
         case leftstack
@@ -517,7 +619,12 @@ for trial = 1:trialsPerRun
     % 'Save data'
     %-----------------------------------------------------------------
     
-    fprintf(fid1,'%s\t %d\t %d\t %d\t %s\t %s\t %d\t %d\t %d\t %s\t %d\t %d\t %.4f\t %.2f\t %.2f\t %d\t \n', subjectID, numRun, runtrial, StimOnset-runStart, char(leftname(trial)), char(rightname(trial)), stimnum1(trial), stimnum2(trial), leftHV(trial), keyPressed, pairNumber(trial), out, respTime, stim1rating(trial), stim2rating(trial), fixationTime(trial) );
+    fprintf(fid1,'%s\t %d\t %d\t %d\t %s\t %s\t %d\t %d\t %d\t %s\t %d\t %d\t %f\t %.2f\t %.2f\t %d\t %f\t %f\t %f\t %d\t %d\t %d\t %c\t %f\n', ...
+        subjectID, numRun, runtrial, StimOnset-runStart, char(leftname(trial)), char(rightname(trial)), stimnum1(trial), stimnum2(trial), ...
+        leftHV(trial), keyPressed, pairNumber(trial), out, respTime, stim1rating(trial), stim2rating(trial), fixationTime(trial), ... 
+        trial_time_fixated_mid, trial_time_fixated_left, trial_time_fixated_right, ...
+        trial_num_mid_fixations, trial_num_left_fixations, trial_num_right_fixations,...
+        first_fixation_area, first_fixation_duration);
     
     runtrial = runtrial+1;
     %     KbQueueFlush;
@@ -611,5 +718,32 @@ ListenChar(0); %listen to keyboard again.
 Screen('CloseAll');
 end
 
+function [current_area,  xpos, ypos] = get_current_fixation_area(dummymode,el,eye_used,midRect,leftRect,rightRect)
+xpos = 0;
+ypos = 0;
+if ~dummymode
+    evt=Eyelink('NewestFloatSample');
+    x=evt.gx(eye_used+1);
+    y=evt.gy(eye_used+1);
+    if(x~=el.MISSING_DATA && y~=el.MISSING_DATA && evt.pa(eye_used+1)>0)
+        xpos=x;
+        ypos=y;
+    end
+else % in dummy mode use mousecoordinates
+    [xpos,ypos] = GetMouse;
+end
+
+% check what area the eye is in
+if IsInRect(xpos,ypos,midRect)
+    current_area='m';
+elseif IsInRect(xpos,ypos,leftRect)
+    current_area='l';
+elseif IsInRect(xpos,ypos,rightRect)
+    current_area='r';
+else
+    current_area='n';
+end
+return
+end
 
 
