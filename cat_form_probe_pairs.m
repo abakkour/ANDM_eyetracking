@@ -224,7 +224,7 @@ for numRun = 1:numRuns
     HL_NG = 1;
     HL_G = 1;
     % Create stimuliForProbe.txt for this run
-    fid1 = fopen([outputPath '/' sprintf('%s_stimuliForProbe_order%d_block_%d_run%d.txt',subjectID,order,block,numRun)], 'w');
+    fid1 = fopen([outputPath '/' sprintf('%s_stimuliForcatProbe_order%d_block_%d_run%d.txt',subjectID,order,block,numRun)], 'w');
     
     for trial = 1:trialsPerRun % trial num within block      
         switch pairType(numRun,trial)
@@ -305,7 +305,7 @@ end % end for numRun = 1:numRunsPerBlocks
 %---------------------------------------------------------------------
 % create a data structure with info about the run and all the matrices
 %---------------------------------------------------------------------
-outfile = strcat(outputPath,'/', sprintf('%s_stimuliForProbe_order%d_block_%d_%d_trials_%s.mat',subjectID,order,block,total_num_trials,date));
+outfile = strcat(outputPath,'/', sprintf('%s_stimuliForcatProbe_order%d_block_%d_%d_trials_%s.mat',subjectID,order,block,total_num_trials,date));
 
 % create a data structure with info about the run
 run_info.subject = subjectID;
