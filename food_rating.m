@@ -25,6 +25,17 @@ hr = sprintf('%02d', c(4));
 minutes = sprintf('%02d', c(5));
 timestamp = [date,'_',hr,'h',minutes,'m'];
 
+
+baseRect = [0 0 400 20];
+pointerRect = [0 0 5 30];
+
+trial_time_fixated_food=999;
+trial_time_fixated_scale=999;
+trial_num_food_fixations=999;
+trial_num_scale_fixations=999;
+first_fixation_area='x';
+first_fixation_duration=999;
+
 % -----------------------------------------------
 %% 'INITIALIZE SCREEN'
 % -----------------------------------------------
@@ -37,6 +48,9 @@ pixelSize=32;
 [w, windowRect] = Screen('OpenWindow',screennum,[],[],pixelSize);
 [xCenter, yCenter] = RectCenter(windowRect);
 
+buffer=20; %20 pixel buffer zone around rects of interest
+foodRect=CenterRectOnPointd([0 0 400+buffer 400+buffer], xCenter, yCenter);
+scaleRect=CenterRectOnPointd([0 0 400+buffer 20+buffer], xCenter, yCenter+350);
 
 %   colors
 % - - - - - -
@@ -70,9 +84,6 @@ for i=1:length(shuff_names)
     Screen('FillRect', w, white, [xCenter-108 yCenter-20 xCenter-108+imx yCenter+20]); 
     Screen(w,'Flip');
 end
-
-baseRect = [0 0 400 20];
-pointerRect = [0 0 5 30];
 
 %-----------------------------------------------------------------
 %% Initializing eye tracking system %
@@ -170,7 +181,7 @@ WaitSecs(2); % Wait 2 sec before first stimulus
 %---------------------------------------------------------------
 
 fid1 = fopen([outputPath '/' subjectID '_food_rating_run' num2str(run) '_' timestamp '.txt'], 'a');
-fprintf(fid1,'subjectID\t onsetTime\t itemName\t rating\t RT\n'); %write the header line
+fprintf(fid1,'subjectID\t onsetTime\t itemName\t rating\t RT\t time_onfood\t time_onscale\t num_food_fix\t num_scale_fix\t first_fix_area\t first_fix_duration\n'); %write the header line
 
 %	pre-allocating matrices and setting defaults
 %---------------------------
@@ -199,6 +210,24 @@ for trialNum = 1:length(shuff_names)   % To cover all the items in one run.
         % ---------------------------
         % messages to save on each trial ( trial number, onset and RT)
         Eyelink('Message', ['trial: ' num2str(trialNum) ' stim: ',shuff_names(trialNum).name,' start_time: ',num2str(image_start_time)]); % mark start time in file
+        
+        trial_time_fixated_food = 0;
+        trial_time_fixated_scale = 0;
+        trial_num_food_fixations = 0;
+        trial_num_scale_fixations = 0;
+        
+        % current_area determines which area eye is in (left, right, neither)
+        % xpos and ypos are used for eyepos_debug
+        [current_area, ~, ~] = get_current_fixation_area(dummymode,el,eye_used,foodRect,scaleRect);
+        
+        % last_area will track what area the eye was in on the previous loop
+        % iteration, so we can determine when a change occurs
+        % fixation_onset_time stores the time a "fixation" into an area began
+        first_fixation_duration = 0;
+        first_fixation_area = current_area; % this will report 'n' in output if they never looked at an object
+        first_fixation_flag = (first_fixation_area=='f' || first_fixation_area=='s'); % flags 1 once the first fixation has occurred, 2 once the first fixation has been processed
+        last_area=current_area;
+        fixation_onset_time = GetSecs;  
     end
     
     
@@ -207,6 +236,49 @@ for trialNum = 1:length(shuff_names)   % To cover all the items in one run.
     %---------------------------------------------------
     noclick=1;
     while noclick
+        
+        if use_eyetracker==1
+            % get eye position
+            [current_area, ~, ~] = get_current_fixation_area(dummymode,el,eye_used,foodRect,scaleRect);
+            
+            % they are looking in a new area
+            % Currently has initial fixation problems? (color, count, etc.)
+            if current_area~=last_area
+                % update timings
+                switch last_area
+                    case 'f'
+                        trial_time_fixated_food = trial_time_fixated_food + (GetSecs-fixation_onset_time);
+                        trial_num_food_fixations = trial_num_food_fixations + 1;
+                    case 's'
+                        trial_time_fixated_scale = trial_time_fixated_scale + (GetSecs-fixation_onset_time);
+                        trial_num_scale_fixations = trial_num_scale_fixations + 1;
+                end
+                
+                fixation_onset_time=GetSecs;
+                
+                % they have looked away from their first fixation: record its
+                % duration and the target (food/scale)
+                if(first_fixation_flag==1)
+                    %outstr=['first fixation lasted ' GetSecs-first_fixation_onset ' seconds'];
+                    %Eyelink('Message',outstr);
+                    first_fixation_duration = GetSecs-first_fixation_onset;
+                    first_fixation_flag = 2;
+                end
+                
+                % this is their first time fixating on an object this trial
+                if(first_fixation_flag==0 && (current_area=='f' || current_area=='s'))
+                    %outstr=['first fixation on ' last_area];
+                    %Eyelink('Message',outstr);
+                    first_fixation_flag = 1;
+                    first_fixation_onset = fixation_onset_time;
+                    first_fixation_area = current_area;
+                end
+            end
+            
+            last_area = current_area;
+            fixation_duration = GetSecs-fixation_onset_time;
+        end
+            
         % Get the current position of the mouse
         [mx, my, buttons] = GetMouse(w);
         
@@ -244,11 +316,29 @@ for trialNum = 1:length(shuff_names)   % To cover all the items in one run.
         %   Eyelink MSG
         % ---------------------------
         Eyelink('Message', ['trial: ' num2str(trialNum) ' Fixation_ITI_start: ',num2str(GetSecs)]); % mark start time in file
+        switch last_area
+            case 'f'
+                trial_time_fixated_food = trial_time_fixated_food + fixation_duration;
+                trial_num_food_fixations = trial_num_food_fixations + 1;
+            case 's'
+                trial_time_fixated_scale = trial_time_fixated_scale + fixation_duration;
+                trial_num_scale_fixations = trial_num_scale_fixations + 1;
+        end
+        % time limit reached while fixating on first fixated object
+        if(first_fixation_flag==1)
+            %outstr=['first fixation lasted ' GetSecs-first_fixation_onset ' seconds'];
+            %Eyelink('Message',outstr);
+            first_fixation_duration = GetSecs-first_fixation_onset;
+            first_fixation_flag = 2;
+        end
     end
  
     %   'Save data'
     %---------------------------
-    fprintf(fid1,'%s\t %d\t %s\t %.2f\t %d\n', subjectID, image_start_time(trialNum)-runStartTime, shuff_names(trialNum).name, rating(trialNum), respTime(trialNum)*1000);
+    fprintf(fid1,'%s\t %d\t %s\t %.2f\t %.4f\t %.4f\t %.4f\t %d\t %d\t %c\t %.4f\n',...
+        subjectID, image_start_time(trialNum)-runStartTime, shuff_names(trialNum).name, rating(trialNum), respTime(trialNum), ...
+        trial_time_fixated_food, trial_time_fixated_scale, trial_num_food_fixations, trial_num_scale_fixations,...
+        first_fixation_area, first_fixation_duration);
     
     WaitSecs(1); %1 sec ITI
     
@@ -306,13 +396,38 @@ end
 
 %   outgoing msg & closing
 % ------------------------------
-CenterText(w,'Great Job. Thank you!',white, 0,-270);
-CenterText(w,'Now we will continue to the next part', white, 0, -180);
+CenterText(w,'Great Job. We will continue shortly.',white, 0,-100);
+CenterText(w,'Please get the experimenter when you are ready.', white, 0, 100);
 Screen('Flip',w);
 
 WaitSecs(4);
 
 Screen('CloseAll');
 
-clear all
+end
 
+function [current_area,  xpos, ypos] = get_current_fixation_area(dummymode,el,eye_used,foodRect,scaleRect)
+xpos = 0;
+ypos = 0;
+if ~dummymode
+    evt=Eyelink('NewestFloatSample');
+    x=evt.gx(eye_used+1);
+    y=evt.gy(eye_used+1);
+    if(x~=el.MISSING_DATA && y~=el.MISSING_DATA && evt.pa(eye_used+1)>0)
+        xpos=x;
+        ypos=y;
+    end
+else % in dummy mode use mousecoordinates
+    [xpos,ypos] = GetMouse;
+end
+
+% check what area the eye is in
+if IsInRect(xpos,ypos,foodRect)
+    current_area='f';
+elseif IsInRect(xpos,ypos,scaleRect)
+    current_area='s';
+else
+    current_area='n';
+end
+return
+end
