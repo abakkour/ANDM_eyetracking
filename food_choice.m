@@ -92,9 +92,9 @@ timestamp = [date,'_',hr,'h',minutes,'m'];
 
 %   'set phase times'
 % - - - - - - - - - - - - - - - - -
-maxtime = 1.5;      % 1.5 second limit on each selection
+maxtime = 2.5;      % 2.5 second limit on each selection
 baseline_fixation_dur = 2; % Need to modify based on if first few volumes are saved or not
-afterrunfixation = 4;
+afterrunfixation = 2;
 
 fixationTime = zeros(trialsPerRun,1); % for later saving fixation times for each trial
 
@@ -162,7 +162,7 @@ end
 %   'read in sorted file'
 % - - - - - - - - - - - - - - - - -
 
-file = dir([mainPath '/Output/' subjectID '_cat_stopGoList_allstim_order*']);
+file = dir([mainPath '/Output/' subjectID '_rated_food_allstim_order*']);
 fid = fopen([mainPath '/Output/' sprintf(file(length(file)).name)]);
 data = textscan(fid, '%s %d %d %f %d') ;% these contain everything from the sortbdm
 stimName = data{1};
@@ -206,9 +206,7 @@ rightRect = [xcenter+distcent ycenter-stackH/2 xcenter+stackW+distcent ycenter+s
 
 %   'load onsets'
 % - - - - - - - - - - - - - - -
-r = Shuffle(1:4);
-onsetlist = load([mainPath '/Onset_files/probe_onset_length_76_' num2str(r(1)) '.mat']);
-onsetlist = onsetlist.onsetlist;
+onsetlist = 0:3.5:245; %70 trials at 3.5 sec per trial
 
 %-----------------------------------------------------------------
 %% 'Write output file header'
