@@ -1,4 +1,4 @@
-function food_rating(subjectID,use_eyetracker)
+function food_rating(subjectID,run,use_eyetracker)
 %food_rating(subjectID,use_eyetracker) Run food rating task.
 %   food_rating(subjectID,use_eyetracker) runs the food tating task,
 %   food_rating outputs a text file named 'subjectID_food_rating.txt'
@@ -112,7 +112,7 @@ if use_eyetracker
     Eyelink('Command', 'link_sample_data = LEFT,RIGHT,GAZE,HREF,AREA');
     
     % open file to record data to
-    edfFile=[subjID '_food_rating.edf'];
+    edfFile=[subjID '_food_rating_run' num2str(run) '.edf'];
     Eyelink('Openfile', edfFile);
     
     % STEP 4
@@ -169,7 +169,7 @@ WaitSecs(2); % Wait 2 sec before first stimulus
 %   'Write output file header'
 %---------------------------------------------------------------
 
-fid1 = fopen([outputPath '/' subjectID '_food_rating_' timestamp '.txt'], 'a');
+fid1 = fopen([outputPath '/' subjectID '_food_rating_run' num2str(run) '_' timestamp '.txt'], 'a');
 fprintf(fid1,'subjectID\t onsetTime\t itemName\t rating\t RT\n'); %write the header line
 
 %	pre-allocating matrices and setting defaults
@@ -258,7 +258,7 @@ end; %	End the big trialNum loop showing all the images in one run.
 %---------------------------------------------------------------
 %%   save data to a .mat file & close out
 %---------------------------------------------------------------
-outfile = strcat(outputPath, '/', subjectID,'_food_rating_', timestamp,'.mat');
+outfile = strcat(outputPath, '/', subjectID,'_food_rating_run_', num2str(run), '_', timestamp,'.mat');
 % create a data structure with info about the run
 run_info.subject = subjectID;
 run_info.date = date;
@@ -300,7 +300,7 @@ if use_eyetracker
     
     
     if dummymode==0
-        movefile(edfFile,['./Output/', subjectID,'_Training_run_',num2str(runNum-2),'_to_run_',num2str(runNum),'_',timestamp,'.edf']);
+        movefile(edfFile,['./Output/', subjectID,'_food_rating_run_',num2str(run),'_',timestamp,'.edf']);
     end;
 end
 
