@@ -4,7 +4,8 @@ function [] = sort_ratings(subjectID,order)
 
 % = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 % =============== Created based on the previous boost codes ===============
-% ==================== by Rotem Botvinik May 2015 ====================
+% ==================== by Rotem Botvinik May 2015 =========================
+% =============== modified by Akram Bakkour June 2016 =====================
 % = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 % This function sorts the stimuli according to the BDM results.
@@ -15,26 +16,22 @@ function [] = sort_ratings(subjectID,order)
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % % % --------- Exterior files needed for task to run correctly: ----------
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-%   [mainPath '\Output\' subjectID '_BDM1.txt']
+%   [mainPath '\Output\' subjectID '_food_rating_*.txt']
 
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % % % ------------------- Creates the following files: --------------------
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 %   'stopGoList_allstim_order%d.txt', order
-%   'stopGoList_trainingstim.txt' ---> The file for training 40 items
+%   'stopGoList_trainingstim.txt' ---> The file for training 48 items
 
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % % ------------------- dummy info for testing purposes -------------------
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% outputPath = '~/Dropbox/ANDM/Output';
+% subjectID = 'test';
 % order = 1;
-% outputPath = '/Users/schonberglabimac1/Documents/BMI_bs_high/Output'; % On the
-% lab's mac
-% outputPath = 'D:\Rotem\Dropbox\Rotem\BMI_bs_high_052015\BMI_BS_high\Output' on
-% Rotem's PC
-% subjectID = 'test999';
-% order = 2;
 
 %=========================================================================
 %%  read in info from ratings.txt
@@ -48,7 +45,7 @@ fclose(fid);
 
 
 %=========================================================================
-%%  Create matrix sorted by descending bid value
+%%  Create matrix sorted by descending ratings value
 %========================================================================
 
 [ratings_sorted,trialnum_sort_byrating] = sort(rating_data{4},'descend');
@@ -77,8 +74,8 @@ elseif order == 2
     
     ratings_sortedM([             10 11 14 15     18 19                                                                     ], 4) = 11; % HV_beep
     ratings_sortedM([     3  6     9 12 13 16     17 20     25 26 31 32 37 38 43 44 49 50                                   ], 4) = 12; % HV_nobeep
-    ratings_sortedM([    59 60 65 66 71 72 77 78 83 84     89 92    93 96 97 100    103 106                                 ], 4) = 22; % LV_beep
-    ratings_sortedM([    90 91     94 95 98 99                                                                              ], 4) = 24; % LV_nobeep
+    ratings_sortedM([    90 91    94 95 98 99                                                                               ], 4) = 22; % LV_beep
+    ratings_sortedM([    59 60 65 66 71 72 77 78 83 84     89 92    93 96 97 100    103 106                                 ], 4) = 24; % LV_nobeep
     ratings_sortedM([ 1:2 4:5 7:8 21:24 27:30 33:36 39:42 45:48 51:58 61:64 67:70 73:76 79:82 85:88 101:102 104:105 107:108 ], 4) = 0; % notTrained
     
 else
