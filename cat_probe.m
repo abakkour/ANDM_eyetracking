@@ -1,11 +1,12 @@
-% function [block, numRun]=script_probe_Israel(block, numRun, subjectID)
+function cat_probe(subjectID, order, numRun, use_eyetracker)
 
-% function probe_Israel(subjectID, order, mainPath, test_comp, sessionNum, block, numRun, numRunsPerBlock, trialsPerRun)
+% function cat_probe(subjectID, order, use_eyetracker)
 %
 % = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 % =============== Created based on the previous boost codes ===============
 % ====================== by Rotem Botvinik May 2015 =======================
 % =============== Modified by Tom Salomon, September 2015 =================
+% ================= Modified by Akram Bakkour, June 2016 ==================
 % = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 % This function runs the probe session of the boost (cue-approach) task. In
@@ -50,78 +51,26 @@
 % numRun = 1;
 % trialsPerRun = 8; % for debugging
 
-tic
-
-clear all
-
 rng shuffle
-% Screen('Preference', 'SkipSyncTests', 1);
 
 % =========================================================================
 % Get input args and check if input is ok
 % =========================================================================
 
-oksessionNum = [1 2 3];
-okComputer = [0 1 2 3 4 5];
-okOrder = [1 2];
-
-% input checkers
-subjectID = input('Subject code: ','s');
-[subjectID_num,okID]=str2num(subjectID(end-2:end));
-while okID==0
-    disp('ERROR: Subject code must contain 3 characters numeric ending, e.g "BMI_bf_101". Please try again.');
-    subjectID = input('Subject code:','s');
-    [subjectID_num,okID]=str2num(subjectID(end-2:end));
-end
-
-% Assign order
-% --------------------------
-% give order value of '1' or '2' for subjects with odd or even ID, respectively
-if mod(subjectID_num,2) == 1 % subject code is odd
-    order = 1;
-else % subject code is even
-    order = 2;
-end
-
 sessionNum=1;
-% sessionNum = input('Enter session number (1 if first for this subject): ');
-% while isempty(sessionNum) || sum(oksessionNum==sessionNum)~=1
-%     disp('ERROR: input must be 1 or 2 or 3 . Please try again.');
-%     sessionNum = input('Enter session number (1 if first for this subject): ');
-% end
 
-trialsPerRun = 38; % this is good for the version of training 40 snacks with the comparisons 6X6 and sanity only for nogo items
-numRunsPerBlock = 2;
+trialsPerRun = 40; % 4x4 HGOvHNOGO + 4x4 LGOvLNOGO + 2x2 HGOvLGO + 2x2 HNOGOvLNOGO
+numRunsPerBlock = 2; % 80 trials total of choice
 
 % =========================================================================
 % set the computer and path
 % =========================================================================
-test_comp=1; % 1-MRI experiment
-% test_comp = input('Which computer are you using? 5 MacBookPro1, 4 new mac, 3 Rotem_PC, 2 Toms_iMac, 1 MRI, 0 if testooom: ');
-% while isempty(test_comp) || sum(okComputer==test_comp)~=1
-%     disp('ERROR: input must be 0,1,2,3,4 or 5. Please try again.');
-%     test_comp = input('Which computer are you using? 5 MacBookPro1, 4 new mac, 3 Rotem_PC, 2 Toms_iMac, 1 MRI, 0 if testooom: ');
-% end
+test_comp=2; % 1-MRI experiment
 
 % Set main path
 mainPath=pwd;
-% switch test_comp
-%     case 0
-%         mainPath = '~\Documents\Boost_Short\Output';
-%     case 1
-%         mainPath = '/Users/schonberglab_laptop1/Documents/Rotem/BMI_MRI_snacks_40';
-%     case 2
-%         mainPath = 'dropbox\trainedInhibition\Boost_Israel';
-%     case 3
-%         mainPath = 'D:\Rotem\Dropbox\Rotem\experiments\BMI_MRI_snacks_40\BMI_MRI_snacks_40';
-%     case 4
-%         mainPath = '/Users/schonberglabimac1/Documents/BMI_MRI_snacks_40';
-%     case 5
-%         mainPath = '/Users/schonberglab_laptop1/Documents/Rotem/BMI_MRI_snacks_40';
-% end % end switch
 
 outputPath = [mainPath '/Output'];
-
 
 %==============================================
 %% 'GLOBAL VARIABLES'
@@ -132,34 +81,7 @@ outputPath = [mainPath '/Output'];
 % a probe block on his/her 2nd session, it is actually probe block 3 for
 % that person:
 
-if test_comp == 1 % If it's an fMRI experiment, let the experimenter insert the block number, to control when to start
-    okblock = [1 2];
-    which_block = input('Enter Block 1 or 2 ');
-    while isempty(which_block) || sum(okblock == which_block) ~=1
-        disp('ERROR: input must be 1 or 2. Please try again.');
-        which_block = input('Enter Block 1 or 2 ');
-    end
-    block = (sessionNum-1)*2 + which_block;
-end % end if test_comp == 1
-
-if test_comp == 1 % If it's an fMRI experiment, let the experimenter insert the run number, to control when to start
-    okRun = [1 2];
-    which_run = input('Enter run 1 or 2 ');
-    while isempty(which_run) || sum(okRun == which_run) ~=1
-        disp('ERROR: input must be 1 or 2. Please try again.');
-        which_run = input('Enter run 1 or 2 ');
-    end
-    numRun = which_run;
-end % end if test_comp == 1
-
-okEyetracker = [1 0];
-ask_if_want_eyetracker = input('Do you want eyetracking (1 - yes, 0 - no): ');
-    while isempty(ask_if_want_eyetracker) || sum(okEyetracker == ask_if_want_eyetracker) ~=1
-        disp('ERROR: input must be 1 or 0. Please try again.');
-        ask_if_want_eyetracker = input('Do you want eyetracking (1 - yes, 0 - no): ');
-    end
-use_eyetracker=ask_if_want_eyetracker; % set to 1/0 to turn on/off eyetracker functions
-
+block = 1;
 
 %   'timestamp'
 % - - - - - - - - - - - - - - - - -
@@ -172,31 +94,21 @@ timestamp = [date,'_',hr,'h',minutes,'m'];
 % - - - - - - - - - - - - - - - - -
 maxtime = 1.5;      % 1.5 second limit on each selection
 baseline_fixation_dur = 2; % Need to modify based on if first few volumes are saved or not
-afterrunfixation = 6;
+afterrunfixation = 4;
 
 fixationTime = zeros(trialsPerRun,1); % for later saving fixation times for each trial
 
 % define the size factor by which the image size and the distance between the images will be reduced
 sizeFactor = 1;
 
-% -----------------------------------------------
-%% Load Instructions
-% -----------------------------------------------
-
-% Load Hebrew instructions image files
-Instructions = dir([mainPath '/Instructions/probe.JPG' ]);
-Instructions_fmri = dir([mainPath '/Instructions/fmri_probe.JPG' ]);
-Instructions_image = imread([mainPath '/Instructions/' Instructions(1).name]);
-Instructions_image_fmri = imread([mainPath '/Instructions/' Instructions_fmri(1).name]);
-
 %==============================================
 %% 'INITIALIZE Screen variables'
 %==============================================
 Screen('Preference', 'VisualDebuglevel', 3); %No PTB intro screen
-screennum = max(Screen('Screens'));
+Screen('Preference', 'SkipSyncTests', 1); %ONLY FOR TESTING
+screennum = min(Screen('Screens'));
 
 pixelSize = 32;
-% [w] = Screen('OpenWindow',screennum,[],[0 0 1000 600],pixelSize);% %debugging screensize
 [w] = Screen('OpenWindow',screennum,[],[],pixelSize);
 
 HideCursor;
@@ -223,9 +135,6 @@ Screen('TextSize',w, 40);
 [wWidth, wHeight] = Screen('WindowSize', w);
 xcenter = wWidth/2;
 ycenter = wHeight/2;
-
-
-
 
 penWidth = 10;
 
@@ -296,15 +205,15 @@ rightRect = [xcenter+distcent ycenter-stackH/2 xcenter+stackW+distcent ycenter+s
 %   'load onsets'
 % - - - - - - - - - - - - - - -
 r = Shuffle(1:4);
-onsetlist = load([mainPath '/Onset_files/probe_onset_length_' num2str(trialsPerRun) '_' num2str(r(1)) '.mat']);
+onsetlist = load([mainPath '/Onset_files/probe_onset_length_76_' num2str(r(1)) '.mat']);
 onsetlist = onsetlist.onsetlist;
 
 %-----------------------------------------------------------------
 %% 'Write output file header'
 %-----------------------------------------------------------------
 
-fid1 = fopen([outputPath '/' subjectID sprintf('_probe_block_%02d_run%d_', block, numRun) timestamp '.txt'], 'a');
-fprintf(fid1,'subjectID\tscanner\torder\tblock\trun\ttrial\tonsettime\tImageLeft\tImageRight\tbidIndexLeft\tbidIndexRight\tIsleftGo\tResponse\tPairType\tOutcome\tRT\tbidLeft\tbidRight\t\fixationTime\t\n'); %write the header line
+fid1 = fopen([outputPath '/' subjectID sprintf('_cat_probe_run%d_', numRun) timestamp '.txt'], 'a');
+fprintf(fid1,'subjectID\torder\tblock\trun\ttrial\tonsettime\tImageLeft\tImageRight\tratingOrderLeft\tratingOrderRight\tIsleftGo\tResponse\tPairType\tOutcome\tRT\tratingLeft\tratingRight\t\fixationTime\t\n'); %write the header line
 
 %-----------------------------------------------------------------
 %% Initializing eye tracking system %
@@ -375,17 +284,14 @@ Screen('TextSize',w, 40);
 %%% While they are waiting for the trigger
 if test_comp == 1
 
-    Screen('PutImage',w,Instructions_image_fmri);
+    CenterText(w,'Choose one item using buttons `u` and `i`',white, 0, -100)
+    CenterText(w,'for left and right respectively.',white, 0, -50)
+    CenterText(w,'You have 2 seconds to make a choice.',white, 0, 0)
+    CenterText(w,'Please press any button to continue ...',white, 0, 100)
     Screen(w,'Flip');
     
-        % wait for the subject to press the button
-    noresp = 1;
-    while noresp,
-        [keyIsDown,~,~] = KbCheck; %(experimenter_device);
-        if keyIsDown && noresp,
-            noresp = 0;
-        end;
-    end;
+    % wait for the subject to press the button
+    KbPressWait(-1);
 
     CenterText(w,'Waiting for trigger...GET READY....', white, 0, 50);
     Screen(w,'Flip');
@@ -404,29 +310,22 @@ else
     if numRun == 1
         if  block == 1 % If this is the first run of the first block, show instructions
 
-            Screen('PutImage',w,Instructions_image);
-            Screen('Flip',w);
-            
-            noresp = 1;
-            while noresp,
-                [keyIsDown] = KbCheck(-1);%deviceNumber=keyboard
-                if keyIsDown && noresp,
-                    noresp = 0;
-                end;
-            end;
+            CenterText(w,'Choose one item using buttons `u` and `i`',white, 0, -100)
+            CenterText(w,'for left and right respectively.',white, 0, -50)
+            CenterText(w,'You have 2 seconds to make a choice.',white, 0, 0)
+            CenterText(w,'Please press any button to continue ...',white, 0, 100)
+            Screen(w,'Flip');
+            % wait for the subject to press the button
+            KbPressWait(-1);
+
         else % this is the first run but not the first block
-            CenterText(w,'Another block starts now, with the same instructions.', white,0,-200);
-            CenterText(w,'This is NOT a demo.', white,0,-140);
-            CenterText(w,'Press any key to continue.', white,0,-80);
+            CenterText(w,'Another block starts now, with the same instructions.', white,0,-100);
+            CenterText(w,'Please press any button to continue ...', white,0,100);
             Screen('Flip',w);
             
-            noresp = 1;
-            while noresp,
-                [keyIsDown] = KbCheck(-1);%deviceNumber=keyboard
-                if keyIsDown && noresp,
-                    noresp = 0;
-                end;
-            end;
+            % wait for the subject to press the button
+            KbPressWait(-1);
+            
         end % end if block == 1
     else % if this is not the first run of the block
         Screen('TextSize',w, 40);
@@ -444,8 +343,8 @@ prebaseline = GetSecs;
 % baseline fixation - currently 10 seconds = 4*Volumes (2.5 TR)
 while GetSecs < prebaseline+baseline_fixation_dur
     %    Screen(w,'Flip', anchor);
-    CenterText(w,'+', white,0,0);
     Screen('TextSize',w, 60);
+    CenterText(w,'+', white,0,0);
     Screen(w,'Flip');
     
 end
@@ -627,9 +526,9 @@ for trial = 1:trialsPerRun
     % 'Save data'
     %-----------------------------------------------------------------
     if leftGo(trial)==1
-        fprintf(fid1,'%s\t %d\t %d\t %s\t %d\t %d\t %d\t %s\t %s\t %d\t %d\t %d\t %s\t %d\t %d\t %.2f\t %.2f\t %.2f\t %d\t \n', subjectID, test_comp, order, sprintf('%02d', block), numRun, runtrial, StimOnset-runStart, char(leftname(trial)), char(rightname(trial)), stimnum1(trial), stimnum2(trial), leftGo(trial), keyPressed, pairType(trial), out, respTime*1000, bidValue(stimnum1(trial)), bidValue(stimnum2(trial)), fixationTime(trial) );
+        fprintf(fid1,'%s\t %d\t %s\t %d\t %d\t %d\t %s\t %s\t %d\t %d\t %d\t %s\t %d\t %d\t %.2f\t %.2f\t %.2f\t %d\t \n', subjectID, order, sprintf('%02d', block), numRun, runtrial, StimOnset-runStart, char(leftname(trial)), char(rightname(trial)), stimnum1(trial), stimnum2(trial), leftGo(trial), keyPressed, pairType(trial), out, respTime*1000, bidValue(stimnum1(trial)), bidValue(stimnum2(trial)), fixationTime(trial) );
     else
-        fprintf(fid1,'%s\t %d\t %d\t %s\t %d\t %d\t %d\t %s\t %s\t %d\t %d\t %d\t %s\t %d\t %d\t %.2f\t %.2f\t %.2f\t %d\t \n', subjectID, test_comp, order, sprintf('%02d', block), numRun, runtrial, StimOnset-runStart, char(leftname(trial)), char(rightname(trial)), stimnum2(trial), stimnum1(trial), leftGo(trial), keyPressed, pairType(trial), out, respTime*1000, bidValue(stimnum2(trial)), bidValue(stimnum1(trial)), fixationTime(trial) );
+        fprintf(fid1,'%s\t %d\t %s\t %d\t %d\t %d\t %s\t %s\t %d\t %d\t %d\t %s\t %d\t %d\t %.2f\t %.2f\t %.2f\t %d\t \n', subjectID, order, sprintf('%02d', block), numRun, runtrial, StimOnset-runStart, char(leftname(trial)), char(rightname(trial)), stimnum2(trial), stimnum1(trial), leftGo(trial), keyPressed, pairType(trial), out, respTime*1000, bidValue(stimnum2(trial)), bidValue(stimnum1(trial)), fixationTime(trial) );
     end
     
     runtrial = runtrial+1;
