@@ -162,7 +162,7 @@ end
 %   'read in sorted file'
 % - - - - - - - - - - - - - - - - -
 
-file = dir([mainPath '/Output/' subjectID '_stopGoList_allstim_order*']);
+file = dir([mainPath '/Output/' subjectID '_cat_stopGoList_allstim_order*']);
 fid = fopen([mainPath '/Output/' sprintf(file(length(file)).name)]);
 data = textscan(fid, '%s %d %d %f %d') ;% these contain everything from the sortbdm
 stimName = data{1};
@@ -173,7 +173,7 @@ fclose(fid);
 %   'read in organized list of stimuli for this run'
 % - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-fid = fopen([outputPath '/' sprintf('%s_stimuliForProbe_order%d_block_%d_run%d.txt',subjectID,order,block,numRun)]);
+fid = fopen([outputPath '/' sprintf('%s_stimuliForcatProbe_order%d_block_%d_run%d.txt',subjectID,order,block,numRun)]);
 stimuli = textscan(fid, '%d %d %d %d %s %s') ;% these contain everything from the organizedProbe
 stimnum1 = stimuli{1};
 stimnum2 = stimuli{2};
