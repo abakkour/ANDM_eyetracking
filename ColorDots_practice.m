@@ -23,6 +23,7 @@ function ColorDots_practice(subjid,test_comp,exp_init,eye,scan,button_order)
 % Feb 2016 modified by AB. ab4096 at columbia dot edu.
 
 Screen('Preference', 'VisualDebugLevel', 0);
+Screen('Preference', 'SkipSyncTests', 1); % FOR TESTING PURPOSES ONLY!
 
 c=clock;
 hr=num2str(c(4));
@@ -44,6 +45,7 @@ black=[0 0 0];
 KbQueueCreate;
 KbQueueStart;
 HideCursor;
+ListenChar(2);
 
 if eye==1
     %==============================================
@@ -636,7 +638,7 @@ Screen('Flip', win);
 WaitSecs(5);
 
 % Finishing up
-%ListenChar(0);
+ListenChar(0);
 ShowCursor;
 Screen('Close', win);
 end
@@ -654,6 +656,6 @@ Eyelink('Shutdown');
 Screen('CloseAll');
 
 % Restore keyboard output to Matlab:
-%ListenChar(0);
+ListenChar(0);
 ShowCursor;
 end
