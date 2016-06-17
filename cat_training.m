@@ -85,6 +85,10 @@ image_duration = 1;
 baseline_fixation = 2;
 afterrunfixation = 4;
 
+%eyetracker output defaults
+trial_time_fixated_food=999;
+trial_num_food_fixations=999;
+
 % -----------------------------------------------
 %% 'INITIALIZE SCREEN'
 % -----------------------------------------------
@@ -94,7 +98,12 @@ Screen('Preference', 'SkipSyncTests', 1); %FOR TESTING ONLY
 screennum = min(Screen('Screens'));
 
 pixelSize=32;
-[w] = Screen('OpenWindow',screennum,[],[],pixelSize);
+[w,windowRect] = Screen('OpenWindow',screennum,[],[],pixelSize);
+
+[xCenter, yCenter] = RectCenter(windowRect);
+
+buffer=20; %20 pixel buffer zone around rects of interest
+foodRect=CenterRectOnPointd([0 0 400+buffer 400+buffer], xCenter, yCenter);
 
 %   colors
 % - - - - - -
@@ -114,6 +123,7 @@ Screen('TextColor',w,white);
 
 WaitSecs(1);
 HideCursor;
+ListenChar(2);
 
 
 %%---------------------------------------------------------------
@@ -330,7 +340,7 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
     timestamp = [date,'_',hr,'h',minutes,'m'];
     
     fid1 = fopen([outputPath '/' subjectID '_cat_training_run_' sprintf('%02d',runNum) '_' timestamp '.txt'], 'a');
-    fprintf(fid1,'subjectID\t order\t runNum\t itemName\t onsetTime\t shuff_trialType\t RT\t respInTime\t AudioTime\t response\t fixationTime\t ladder1\t ladder2\t ratingIndex\t itemNameIndex\t rating\t \n'); %write the header line
+    fprintf(fid1,'subjectID\t order\t runNum\t itemName\t onsetTime\t shuff_trialType\t RT\t respInTime\t AudioTime\t response\t fixationTime\t ladder1\t ladder2\t ratingIndex\t itemNameIndex\t rating\t time_fix_food\t num_food_fix\n'); %write the header line
     
     
     %   'pre-trial fixation'
@@ -444,6 +454,22 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
             % ---------------------------
             % messages to save on each trial ( trial number, onset and RT)
             Eyelink('Message', ['run: ',num2str(runNum),' trial: ' num2str(trialNum) ' stim: ',shuff_names{runNum}{trialNum},' start_time: ',num2str(image_start_time)]); % mark start time in file
+            
+            trial_time_fixated_food = 0;
+            trial_num_food_fixations = 0;
+            
+            % current_area determines which area eye is in (left, right, neither)
+            % xpos and ypos are used for eyepos_debug
+            [current_area, ~, ~] = get_current_fixation_area(dummymode,el,eye_used,foodRect);
+            
+            % last_area will track what area the eye was in on the previous loop
+            % iteration, so we can determine when a change occurs
+            % fixation_onset_time stores the time a "fixation" into an area began
+            first_fixation_duration = 0;
+            first_fixation_area = current_area; % this will report 'n' in output if they never looked at an object
+            first_fixation_flag = (first_fixation_area=='f'); % flags 1 once the first fixation has occurred, 2 once the first fixation has been processed
+            last_area=current_area;
+            fixation_onset_time = GetSecs;
         end
         
         noresp = 1;
@@ -456,6 +482,44 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
         %% 'EVALUATE RESPONSE & ADJUST LADDER ACCORDINGLY'
         %---------------------------------------------------
         while (GetSecs-image_start_time < image_duration)
+            
+            if use_eyetracker==1
+                % get eye position
+                [current_area, ~, ~] = get_current_fixation_area(dummymode,el,eye_used,foodRect);
+                
+                % they are looking in a new area
+                % Currently has initial fixation problems? (color, count, etc.)
+                if current_area~=last_area
+                    % update timings
+                    switch last_area
+                        case 'f'
+                            trial_time_fixated_food = trial_time_fixated_food + (GetSecs-fixation_onset_time);
+                            trial_num_food_fixations = trial_num_food_fixations + 1;
+                    end
+                    
+                    fixation_onset_time=GetSecs;
+                    
+                    % they have looked away from their first fixation: record its
+                    % duration and the target (food/scale)
+                    if(first_fixation_flag==1)
+                        %outstr=['first fixation lasted ' GetSecs-first_fixation_onset ' seconds'];
+                        %Eyelink('Message',outstr);
+                        first_fixation_duration = GetSecs-first_fixation_onset;
+                        first_fixation_flag = 2;
+                    end
+                    
+                    % this is their first time fixating on an object this trial
+                    if(first_fixation_flag==0 && current_area=='f')
+                        %outstr=['first fixation on ' last_area];
+                        %Eyelink('Message',outstr);
+                        first_fixation_flag = 1;
+                        first_fixation_onset = fixation_onset_time;
+                        first_fixation_area = current_area;
+                    end
+                end
+                last_area = current_area;
+                fixation_duration = GetSecs-fixation_onset_time;
+            end
             
             %High-Valued BEEP items
             %---------------------------
@@ -660,6 +724,8 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
                 end % end if pressed && noresp
             end %evaluate trial_type
             
+            
+            
         end %%% End big while waiting for response within 1000 msec
         
         
@@ -684,6 +750,19 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
             %   Eyelink MSG
             % ---------------------------
             Eyelink('Message', ['run: ',num2str(runNum),' trial: ' num2str(trialNum) ' Fixation_ITI_start: ',num2str(GetSecs)]); % mark start time in file
+            switch last_area
+                case 'f'
+                    trial_time_fixated_food = trial_time_fixated_food + fixation_duration;
+                    trial_num_food_fixations = trial_num_food_fixations + 1;
+            end
+            % time limit reached while fixating on first fixated object
+            if(first_fixation_flag==1)
+                %outstr=['first fixation lasted ' GetSecs-first_fixation_onset ' seconds'];
+                %Eyelink('Message',outstr);
+                first_fixation_duration = GetSecs-first_fixation_onset;
+                first_fixation_flag = 2;
+            end
+
         end
         
         if noresp == 1
@@ -857,7 +936,12 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
         %   'Save data'
         %---------------------------
         
-        fprintf(fid1,'%s\t %d\t %d\t %s\t %d\t %d\t %d\t %d\t %d\t %d\t %d\t %.2f\t %.2f\t %.2f\t %d\t %.2f\t \n', subjectID, order, runNum, shuff_names{runNum}{trialNum}, actual_onset_time{runNum}(trialNum,1), shuff_trialType{runNum}(trialNum), respTime{runNum}(trialNum,1)*1000, respInTime{runNum}(trialNum,1), Audio_time{runNum}(trialNum,1)*1000, keyPressed{runNum}(trialNum,1),   fix_time{runNum}(trialNum,1)-anchor, Ladder1{runNum}(length(Ladder1{runNum})), Ladder2{runNum}(length(Ladder2{runNum})), shuff_bidIndex{runNum}(trialNum,1), shuff_itemnameIndex{runNum}(trialNum,1),shuff_bidValues{runNum}(trialNum,1));
+        fprintf(fid1,'%s\t %d\t %d\t %s\t %d\t %d\t %f\t %d\t %d\t %d\t %d\t %.2f\t %.2f\t %.2f\t %d\t %.2f\t %.4f\t %d\n', ...
+            subjectID, order, runNum, shuff_names{runNum}{trialNum}, actual_onset_time{runNum}(trialNum,1), shuff_trialType{runNum}(trialNum), ...
+            respTime{runNum}(trialNum,1), respInTime{runNum}(trialNum,1), Audio_time{runNum}(trialNum,1)*1000, keyPressed{runNum}(trialNum,1), ...
+            fix_time{runNum}(trialNum,1)-anchor, Ladder1{runNum}(length(Ladder1{runNum})), Ladder2{runNum}(length(Ladder2{runNum})), ... 
+            shuff_bidIndex{runNum}(trialNum,1), shuff_itemnameIndex{runNum}(trialNum,1),shuff_bidValues{runNum}(trialNum,1), ...
+            trial_time_fixated_food,trial_num_food_fixations);
         
     end; %	End the big trialNum loop showing all the images in one run.
     
@@ -974,8 +1058,33 @@ end
 WaitSecs(4);
 
 KbQueueFlush;
-Screen('CloseAll');
 ShowCursor;
+ListenChar(0);
+Screen('CloseAll');
 
-clear all
+end
 
+
+function [current_area,  xpos, ypos] = get_current_fixation_area(dummymode,el,eye_used,foodRect)
+xpos = 0;
+ypos = 0;
+if ~dummymode
+    evt=Eyelink('NewestFloatSample');
+    x=evt.gx(eye_used+1);
+    y=evt.gy(eye_used+1);
+    if(x~=el.MISSING_DATA && y~=el.MISSING_DATA && evt.pa(eye_used+1)>0)
+        xpos=x;
+        ypos=y;
+    end
+else % in dummy mode use mousecoordinates
+    [xpos,ypos] = GetMouse;
+end
+
+% check what area the eye is in
+if IsInRect(xpos,ypos,foodRect)
+    current_area='f';
+else
+    current_area='n';
+end
+return
+end
