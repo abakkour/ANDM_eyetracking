@@ -85,12 +85,15 @@ end % end if order == 1
 itemsForTraining = ratings_sortedM([3 6 9:20 25:26 31:32 37:38 43:44 49:50 59:60 65:66 71:72 77:78 83:84 89:100 103 106],:);
 itemsNamesForTraining = stimnames_sorted_by_rating([3 6 9:20 25:26 31:32 37:38 43:44 49:50 59:60 65:66 71:72 77:78 83:84 89:100 103 106]);
 
+itemsForChoice = ratings_sortedM([ 1:2 4:5 7:8 21:24 27:30 33:36 39:42 45:48 51:58 61:64 67:70 73:76 79:82 85:88 101:102 104:105 107:108 ],:);
+itemsNamesForChoice = stimnames_sorted_by_rating([ 1:2 4:5 7:8 21:24 27:30 33:36 39:42 45:48 51:58 61:64 67:70 73:76 79:82 85:88 101:102 104:105 107:108 ]);
+
 %=========================================================================
 %%  create stopGoList_allstim.txt
 %   this file is used during probe
 %=========================================================================
 
-fid2 = fopen([outputPath '/' subjectID sprintf('_stopGoList_allstim_order%d.txt', order)], 'w');    
+fid2 = fopen([outputPath '/' subjectID sprintf('_rated_food_allstim_order%d.txt', order)], 'w');    
 
 for i = 1:length(ratings_sortedM)
     fprintf(fid2, '%s\t%d\t%d\t%d\t%d\t\n', stimnames_sorted_by_rating{i,1},ratings_sortedM(i,4),ratings_sortedM(i,3),ratings_sortedM(i,2),ratings_sortedM(i,1)); 
@@ -98,12 +101,23 @@ end
 fprintf(fid2, '\n');
 fclose(fid2);
 
-fid3 = fopen([outputPath '/' subjectID '_stopGoList_trainingstim.txt'], 'w');    
+fid3 = fopen([outputPath '/' subjectID '_cat_stopGoList_trainingstim.txt'], 'w');    
 
 for i = 1:length(itemsForTraining)
     fprintf(fid3, '%s\t%d\t%d\t%d\t%d\t\n', itemsNamesForTraining{i,1},itemsForTraining(i,4),itemsForTraining(i,3),itemsForTraining(i,2),itemsForTraining(i,1)); 
 end
+
 fprintf(fid3, '\n');
 fclose(fid3);
+
+
+fid4 = fopen([outputPath '/' subjectID '_food_choice_stim.txt'], 'w');    
+
+for i = 1:length(itemsForTraining)
+    fprintf(fid4, '%s\t%d\t%d\t%d\t%d\t\n', itemsNamesForChoice{i,1},itemsForChoice(i,4),itemsForChoice(i,3),itemsForChoice(i,2),itemsForChoice(i,1)); 
+end
+
+fprintf(fid4, '\n');
+fclose(fid4);
 
 end % end function
