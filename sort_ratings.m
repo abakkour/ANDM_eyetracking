@@ -40,7 +40,7 @@ function [] = sort_ratings(subjectID,order)
 outputPath='Output/';
 files=dir([outputPath '/' subjectID '_food_rating_run2*.txt']);
 fid = fopen([outputPath files(length(files)).name]); %in case there are multiple files, take the last one
-rating_data = textscan(fid, '%s%d%s%.2f%d' , 'HeaderLines', 1); %read in data as new matrix   
+rating_data = textscan(fid, '%s%d%s%.2f%.4f%.4f%.4f%d%d%c%.4f' , 'HeaderLines', 1); %read in data as new matrix   
 fclose(fid);
 
 
