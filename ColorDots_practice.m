@@ -255,7 +255,7 @@ if eye==1
     Eyelink('StartRecording');
     % record a few samples before we actually start displaying
     WaitSecs(0.1);
-    Eyelink('Message', 'SYNCTIME after fixations'); % mark start time in file
+    Eyelink('Message', 'SYNCTIME after fixation run1'); % mark start time in file
     if ~dummymode
         eye_used = Eyelink('EyeAvailable');
         if eye_used == -1
@@ -635,6 +635,8 @@ for c=1:5
                 % Finish Initialization %
                 %%%%%%%%%%%%%%%%%%%%%%%%%
             end
+            CenterText(win,'Please press any key to continue...',white,0,0);
+            Screen('Flip', win);
             KbQueueFlush;
             KbQueueWait;
             CenterText(win,'+',white,0,0);
@@ -645,7 +647,7 @@ for c=1:5
                 Eyelink('StartRecording');
                 % record a few samples before we actually start displaying
                 WaitSecs(0.1);
-                Eyelink('Message', 'SYNCTIME after fixations'); % mark start time in file
+                Eyelink('Message', 'SYNCTIME after fixation run2'); % mark start time in file
                 if ~dummymode
                     eye_used = Eyelink('EyeAvailable');
                     if eye_used == -1
@@ -663,10 +665,8 @@ end
 save(['Output/' subjid '_dots_practice_' timestamp '.mat'],'Dots','info')
 
 fclose(fid1);
-if trial > 200 && trial < 301
+if trial == 200
     run=2;
-elseif trial > 300 && trial < 401
-    run=3;
 else
     run=4;
 end
@@ -736,4 +736,28 @@ Screen('CloseAll');
 % Restore keyboard output to Matlab:
 ListenChar(0);
 ShowCursor;
+end
+
+function [current_area,  xpos, ypos] = get_current_fixation_area(dummymode,el,eye_used,dotsRect)
+xpos = 0;
+ypos = 0;
+if ~dummymode
+    evt=Eyelink('NewestFloatSample');
+    x=evt.gx(eye_used+1);
+    y=evt.gy(eye_used+1);
+    if(x~=el.MISSING_DATA && y~=el.MISSING_DATA && evt.pa(eye_used+1)>0)
+        xpos=x;
+        ypos=y;
+    end
+else % in dummy mode use mousecoordinates
+    [xpos,ypos] = GetMouse;
+end
+
+% check what area the eye is in
+if IsInRect(xpos,ypos,dotsRect)
+    current_area='d';
+else
+    current_area='n';
+end
+return
 end
