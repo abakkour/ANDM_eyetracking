@@ -297,9 +297,8 @@ Screen('TextSize',w, 40);
 %%% While they are waiting for the trigger
 if test_comp == 1
     
-    CenterText(w,'Choose one item using buttons `u` and `i`',white, 0, -100);
-    CenterText(w,'for left and right respectively.',white, 0, -50);
-    CenterText(w,'You have 2 seconds to make a choice.',white, 0, 0);
+    CenterText(w,'We will continue with more of the food chioce task.',white, 0, -100);
+    
     CenterText(w,'Please press any button to continue ...',white, 0, 100);
     Screen(w,'Flip');
     
@@ -323,16 +322,14 @@ else
     if numRun == 1
         if  block == 1 % If this is the first run of the first block, show instructions
             
-            CenterText(w,'Choose one item using buttons `u` and `i`',white, 0, -100);
-            CenterText(w,'for left and right respectively.',white, 0, -50);
-            CenterText(w,'You have 2 seconds to make a choice.',white, 0, 0);
+            CenterText(w,'We will continue with more of the food chioce task.',white, 0, -100);
             CenterText(w,'Please press any button to continue ...',white, 0, 100);
             Screen(w,'Flip');
             % wait for the subject to press the button
             KbPressWait(-1);
             
         else % this is the first run but not the first block
-            CenterText(w,'Another block starts now, with the same instructions.', white,0,-100);
+            CenterText(w,'We will continue with more of the food chioce task.',white, 0, -100);
             CenterText(w,'Please press any button to continue ...', white,0,100);
             Screen('Flip',w);
             
@@ -382,6 +379,13 @@ if use_eyetracker
     % ---------------------------
     % messages to save on each trial ( trial number, onset and RT)
     Eyelink('Message',['SYNCTIME at run start:',num2str(GetSecs)]); % mark start time in file
+    if ~dummymode
+        eye_used = Eyelink('EyeAvailable');
+        if eye_used == -1
+            fprintf('Eyelink aborted - could not find which eye being used.\n');
+            cleanup;
+        end
+    end
 end
 
 % for trial = 1:5 % for debugging
