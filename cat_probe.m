@@ -232,7 +232,7 @@ if use_eyetracker
     Eyelink('Command', 'link_sample_data = LEFT,RIGHT,GAZE,HREF,AREA');
     
     % open file to record data to
-    edfFile='cat_probe.edf';
+    edfFile='catprobe.edf';
     Eyelink('Openfile', edfFile);
     
     % STEP 4
@@ -259,10 +259,30 @@ end
 KbQueueCreate;
 Screen('TextSize',w, 40);
 
-CenterText(w,'Choose one item using buttons `u` and `i`',white, 0, -100);
-CenterText(w,'for left and right respectively.',white, 0, -50);
-CenterText(w,'You have 2 seconds to make a choice.',white, 0, 0);
-CenterText(w,'Please press any button to continue ...',white, 0, 100);
+CenterText(w,'Now you will be asked to choose a food to eat.',white, 0, -350);
+CenterText(w,'On each trial, you will see a food picture on the left',white, 0, -300);
+CenterText(w,'and a different food picture on the right.',white, 0, -250);
+CenterText(w,'For each trial, indicate whether you `Prefer`',white, 0, -200);
+CenterText(w,'the food on the left by pressing the `u` key or instead',white, 0, -150);
+CenterText(w,'`Prefer` the food on the right by pressing `i` the key.',white, 0, -100);
+CenterText(w,'as you will be asked to eat a snack sized portion',white, 0, -50);
+CenterText(w,'of one of your preferred items, randomly selected at the end of the task.',white, 0, 0);
+CenterText(w,'That is, your choice on one trial, randomly selected,',white, 0, 50);
+CenterText(w,'will determine the snack you eat today.',white, 0, 100);
+  
+snack=1;
+if snack==1  
+    CenterText(w,'Again, please be sure to make your choice',white, 0, 150);
+    CenterText(w,'based on what you actually want as a snack because',white, 0, 200);
+    CenterText(w,'you will be served a snack after the task based on your choices.',white, 0, 250);
+else
+      
+    CenterText(w,'Remember to imagine that you will be given a snack',white, 0, 150);
+    CenterText(w,'after this task and make sure your ratings are based',white, 0, 200);
+    CenterText(w,'upon what you would want to have as a snack.',white, 0, 250);
+end    
+
+CenterText(w,'Please press any button to continue ...',white, 0, 350);
 Screen(w,'Flip');
 % wait for the subject to press the button
 KbPressWait(-1);
@@ -316,6 +336,13 @@ for numRun=run:2
         % ---------------------------
         % messages to save on each trial ( trial number, onset and RT)
         Eyelink('Message',['SYNCTIME at run start:',num2str(GetSecs)]); % mark start time in file
+        if ~dummymode
+            eye_used = Eyelink('EyeAvailable');
+            if eye_used == -1
+                fprintf('Eyelink aborted - could not find which eye being used.\n');
+                cleanup;
+            end
+        end
     end
     
     % for trial = 1:5 % for debugging
