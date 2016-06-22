@@ -246,7 +246,11 @@ end
 
 Screen('TextSize',w, 40);
 
-CenterText(w,'Press button `b` on keyboard every time your hear a beep.', white, 0,0);
+CenterText(w,'Single pictures of food will appear at the center', white, 0,-150);
+CenterText(w,'of the screen. Please view these pictures.', white, 0,-100);
+CenterText(w,'Every now and then you will hear a beep sound.', white, 0,-50);
+CenterText(w,'When you hear a beep, and only when you hear a beep,', white, 0,0);
+CenterText(w,'press button `b` on the keyboard as fast as you can.', white, 0,50);
 CenterText(w,'Press any key to continue', Green, 0,150);
 
 Screen(w,'Flip');
@@ -323,6 +327,13 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
         % ---------------------------
         % messages to save on each trial ( trial number, onset and RT)
         Eyelink('Message', ['SYNCTIME at run ' num2str(runNum) ' start: ',GetSecs]); % mark start time in file
+        if ~dummymode
+            eye_used = Eyelink('EyeAvailable');
+            if eye_used == -1
+                fprintf('Eyelink aborted - could not find which eye being used.\n');
+                cleanup;
+            end
+        end
     end
     
     KbQueueFlush;
@@ -408,7 +419,7 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
         last_run=dir(sprintf('%s/%s_cat_training_run_%02d_*.txt',outputPath,subjectID,runNum-1));
         clear last_run_fid last_run_data
         last_run_fid=fopen([outputPath,'/',last_run(end).name]);
-        last_run_data=textscan(last_run_fid,'%s %f %f %s %f %f %f %f %f %f %f %f %f %f %f %f','HeaderLines',1);
+        last_run_data=textscan(last_run_fid,'%s %d %d %s %f %d %f %d %f %d %f %f %f %d %d %f %f %d','HeaderLines',1);
         last_run_fid=fclose(last_run_fid);
         
         Ladder1IN=last_run_data{12}(end);
@@ -453,7 +464,8 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
             %   Eyelink MSG
             % ---------------------------
             % messages to save on each trial ( trial number, onset and RT)
-            Eyelink('Message', ['run: ',num2str(runNum),' trial: ' num2str(trialNum) ' stim: ',shuff_names{runNum}{trialNum},' start_time: ',num2str(image_start_time)]); % mark start time in file
+            %Eyelink('Message', ['run: ',num2str(runNum),' trial: ' num2str(trialNum) ' stim: ',shuff_names{runNum}{trialNum},' start_time: ',num2str(image_start_time)]); % mark start time in file
+            Eyelink('Message', ['run: ',num2str(runNum),' trial: ' num2str(trialNum)]); % mark start time in file
             
             trial_time_fixated_food = 0;
             trial_num_food_fixations = 0;
@@ -470,6 +482,7 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
             first_fixation_flag = (first_fixation_area=='f'); % flags 1 once the first fixation has occurred, 2 once the first fixation has been processed
             last_area=current_area;
             fixation_onset_time = GetSecs;
+            first_fixation_onset=fixation_onset_time;
         end
         
         noresp = 1;
@@ -936,7 +949,7 @@ for runNum = runInd:runInd+num_runs_per_block-1 %this for loop allows all runs i
         %   'Save data'
         %---------------------------
         
-        fprintf(fid1,'%s\t %d\t %d\t %s\t %d\t %d\t %f\t %d\t %d\t %d\t %d\t %.2f\t %.2f\t %.2f\t %d\t %.2f\t %.4f\t %d\n', ...
+        fprintf(fid1,'%s\t%d\t%d\t%s\t%f\t%d\t%f\t%d\t%f\t%d\t%f\t%f\t%f\t%d\t%d\t%.2f\t%.4f\t%d\n', ...
             subjectID, order, runNum, shuff_names{runNum}{trialNum}, actual_onset_time{runNum}(trialNum,1), shuff_trialType{runNum}(trialNum), ...
             respTime{runNum}(trialNum,1), respInTime{runNum}(trialNum,1), Audio_time{runNum}(trialNum,1)*1000, keyPressed{runNum}(trialNum,1), ...
             fix_time{runNum}(trialNum,1)-anchor, Ladder1{runNum}(length(Ladder1{runNum})), Ladder2{runNum}(length(Ladder2{runNum})), ... 
@@ -991,7 +1004,7 @@ end % End the run loop to go over all the runs
 %---------------------------------------------------------------
 %%   save data to a .mat file & close out
 %---------------------------------------------------------------
-outfile = strcat(outputPath, '/', subjectID,'_training_run', sprintf('%02d',runNum-num_runs_per_block+1),'_to_run', sprintf('%02d',runNum),'_', timestamp,'.mat');
+outfile = strcat(outputPath, '/', subjectID,'_cat_training_run', sprintf('%02d',runNum-num_runs_per_block+1),'_to_run', sprintf('%02d',runNum),'_', timestamp,'.mat');
 % create a data structure with info about the run
 run_info.subject = subjectID;
 run_info.date = date;
@@ -1037,7 +1050,7 @@ if use_eyetracker
     
     
     if dummymode==0
-        movefile(edfFile,['./Output/', subjectID,'_Training_run_',num2str(runNum-2),'_to_run_',num2str(runNum),'_',timestamp,'.edf']);
+        movefile(edfFile,strcat(outputPath, '/', subjectID,'_cat_training_run', sprintf('%02d',runNum-num_runs_per_block+1),'_to_run', sprintf('%02d',runNum),'_', timestamp,'.edf'));
     end;
 end
 
