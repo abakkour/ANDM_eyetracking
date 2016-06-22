@@ -49,6 +49,7 @@ white=[255 255 255];
 black=[0 0 0];
 
 KbQueueCreate;
+KbQueueStart;
 HideCursor;
 
 trial_time_fixated_dots=999;
