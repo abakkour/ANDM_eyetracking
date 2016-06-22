@@ -123,7 +123,7 @@ if use_eyetracker
     Eyelink('Command', 'link_sample_data = LEFT,RIGHT,GAZE,HREF,AREA');
     
     % open file to record data to
-    edfFile=[subjID '_food_rating_run' num2str(run) '.edf'];
+    edfFile=['ratingr' num2str(run) '.edf'];
     Eyelink('Openfile', edfFile);
     
     % STEP 4
@@ -150,9 +150,24 @@ end
 KbQueueCreate;
 Screen('TextSize',w, 40);
 
-CenterText(w,'Rate how much you like these items from 0 to 10', white, 0,-100);
-CenterText(w,'using the mouse.', white, 0,0);
-CenterText(w,'Click anywhere to continue', white, 0,150);
+if run==1
+    CenterText(w,'You will see a series of pictures of food.', white, 0,-300);
+    CenterText(w,'Imagine you had to eat one of these foods today.', white, 0,-250);
+    CenterText(w,'For each picture, please rate how much you would prefer to eat that food.', white, 0,-200);
+    CenterText(w,'You will rate each picture on a scale from 0 to 10,', white, 0,-150);
+    CenterText(w,'with 0 being that you would not want to eat that food at all', white, 0,-100);
+    CenterText(w,'and 10 being that you most strongly prefer to eat that food.', white, 0,-50);
+    CenterText(w,'Use the mouse to move the blue rating indicator bar', white, 0,0);
+    CenterText(w,'along the scale to indicate your preference.', white, 0,50);
+    CenterText(w,'There are no right answers. Please rate only according to your own preference.', white, 0,100);
+    CenterText(w,'Take as much time as you would like.', white, 0,150);
+    CenterText(w,'Click anywhere to continue', white, 0,250);
+else
+    CenterText(w,'Now that you have seen all the possible food items,', white, 0,-25);
+    CenterText(w,'please rate again how much you would prefer to eat the food in each picture.', white, 0,25);
+    CenterText(w,'Click anywhere to continue', white, 0,125);
+end
+    
 Screen(w,'Flip');
 WaitSecs(0.01);
 
@@ -172,6 +187,13 @@ if use_eyetracker
     %   Eyelink MSG
     % ---------------------------
     Eyelink('Message', ['SYNCTIME start: ', num2str(runStartTime)]); % mark start time in file
+    if ~dummymode
+        eye_used = Eyelink('EyeAvailable');
+        if eye_used == -1
+            fprintf('Eyelink aborted - could not find which eye being used.\n');
+            cleanup;
+        end
+    end
 end
 
 WaitSecs(2); % Wait 2 sec before first stimulus
@@ -192,7 +214,7 @@ centeredRect = CenterRectOnPointd(baseRect, xCenter, yCenter+350); %main scale
 
 %Run trial loop
 for trialNum = 1:length(shuff_names)   % To cover all the items in one run.
-    xpos=Shuffle(-100:100); %want the pointer to start in a random position every trial
+    xpos=Shuffle(-200:200); %want the pointer to start in a random position every trial
     centeredPointer=CenterRectOnPointd(pointerRect, xCenter+xpos(1), yCenter+350);
     SetMouse(xCenter, yCenter,w); %place cursor in middle of screen
     Screen('TextSize',w, 40);
@@ -209,8 +231,8 @@ for trialNum = 1:length(shuff_names)   % To cover all the items in one run.
         %   Eyelink MSG
         % ---------------------------
         % messages to save on each trial ( trial number, onset and RT)
-        Eyelink('Message', ['trial: ' num2str(trialNum) ' stim: ',shuff_names(trialNum).name,' start_time: ',num2str(image_start_time)]); % mark start time in file
-        
+        %Eyelink('Message', ['trial: ' num2str(trialNum) ' stim: ',shuff_names(trialNum).name,' start_time: ',num2str(image_start_time(trialNum))]); % mark start time in file
+        Eyelink('Message', ['trial: ' num2str(trialNum)]); % mark start time in file
         trial_time_fixated_food = 0;
         trial_time_fixated_scale = 0;
         trial_num_food_fixations = 0;
@@ -227,7 +249,8 @@ for trialNum = 1:length(shuff_names)   % To cover all the items in one run.
         first_fixation_area = current_area; % this will report 'n' in output if they never looked at an object
         first_fixation_flag = (first_fixation_area=='f' || first_fixation_area=='s'); % flags 1 once the first fixation has occurred, 2 once the first fixation has been processed
         last_area=current_area;
-        fixation_onset_time = GetSecs;  
+        fixation_onset_time = GetSecs;
+        first_fixation_onset=fixation_onset_time;
     end
     
     
@@ -353,8 +376,6 @@ outfile = strcat(outputPath, '/', subjectID,'_food_rating_run_', num2str(run), '
 run_info.subject = subjectID;
 run_info.date = date;
 run_info.outfile = outfile;
-run_info.revision_date = revision_date;
-run_info.script_name = mfilename;
 clear Images;
 
 save(outfile);
