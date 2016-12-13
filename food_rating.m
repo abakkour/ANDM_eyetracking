@@ -301,9 +301,9 @@ for trialNum = 1:length(shuff_names)   % To cover all the items in one run.
             last_area = current_area;
             fixation_duration = GetSecs-fixation_onset_time;
         end
-            
+        
         % Get the current position of the mouse
-        [mx, my, buttons] = GetMouse(w);
+        [mx, my,buttons] = GetMouse(w);
         
         % See if the mouse cursor is inside the square
         inside = IsInRect(mx, my, centeredRect);
@@ -317,7 +317,16 @@ for trialNum = 1:length(shuff_names)   % To cover all the items in one run.
             CenterText(w,'5',white,0,360);
             CenterText(w,'10',white,200,360);
             vbl=Screen(w,'Flip');
-            if sum(buttons) > 0
+            while any(buttons)
+                [mx, my, buttons] = GetMouse(w);
+                centeredPointer=CenterRectOnPointd(pointerRect, mx, yCenter+350);
+                Screen('PutImage',w,Images{trialNum});
+                Screen('FillRect', w, white, centeredRect);
+                Screen('FillRect', w, blue, centeredPointer);
+                CenterText(w,'0',white,-200,360);
+                CenterText(w,'5',white,0,360);
+                CenterText(w,'10',white,200,360);
+                vbl=Screen(w,'Flip');
                 rating(trialNum)=(mx-xCenter+200)/40;
                 respTime(trialNum)=vbl-image_start_time(trialNum);
                 noclick=0;
