@@ -103,7 +103,13 @@ if eye==1
     
     % open file to record data to
     edfFile='recdata.edf';
-    Eyelink('Openfile', edfFile);
+    i=Eyelink('Openfile', edfFile);
+    if i~=0
+        fprint('Cannot create EDF file ''%s'' ', edfFile);
+        Eyelink('Shutdown');
+        sca;
+        return;
+    end
     
     % STEP 4
     % Calibrate the eye tracker

@@ -187,7 +187,14 @@ if use_eyetracker
     
     % open file to record data to
     edfFile=['train',num2str(block),'.edf'];
-    Eyelink('Openfile', edfFile);
+    i=Eyelink('Openfile', edfFile);
+    
+    if i~=0
+        fprint('Cannot create EDF file ''%s'' ', edfFile);
+        Eyelink('Shutdown');
+        sca;
+        return;
+    end
     
     % STEP 4
     % Calibrate the eye tracker
