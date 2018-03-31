@@ -1,6 +1,7 @@
 function ColorDots_practice(subjid,test_comp,exp_init,eye,scan,button_order)
 % This demo shows color dots three times and returns their information.
 %
+% ColorDots_practice(subjid,test_comp,exp_init,eye,scan,button_order)
 % info{trial} has the following fields:
 % - color_coh
 % : corresponds to the difficulty and the answer.
@@ -23,7 +24,7 @@ function ColorDots_practice(subjid,test_comp,exp_init,eye,scan,button_order)
 % Feb 2016 modified by AB. ab4096 at columbia dot edu.
 
 Screen('Preference', 'VisualDebugLevel', 0);
-Screen('Preference', 'SkipSyncTests', 1); % FOR TESTING PURPOSES ONLY!
+%Screen('Preference', 'SkipSyncTests', 1); % FOR TESTING PURPOSES ONLY!
 
 c=clock;
 hr=num2str(c(4));
@@ -96,7 +97,7 @@ if eye==1
     
     % make sure that we get gaze data from the Eyelink
     Eyelink('command', 'link_event_data = GAZE,GAZERES,HREF,AREA,VELOCITY');
-    Eyelink('Command', 'link_sample_data = LEFT,RIGHT,GAZE,HREF,AREA');
+    Eyelink('command', 'link_sample_data = LEFT,RIGHT,GAZE,HREF,AREA');
     
     % open file to record data to
     edfFile='recdata.edf';
@@ -252,6 +253,8 @@ end
 if eye==1
     % STEP 5
     % start recording eye position
+    Eyelink('Command', 'set_idle_mode');
+    WaitSecs(0.05);
     Eyelink('StartRecording');
     % record a few samples before we actually start displaying
     WaitSecs(0.1);
@@ -571,8 +574,10 @@ for c=1:5
                 fprintf('Running experiment on a ''%s'' tracker.\n', vs );
                 
                 % make sure that we get gaze data from the Eyelink
-                Eyelink('command', 'link_event_data = GAZE,GAZERES,HREF,AREA,VELOCITY');
-                Eyelink('Command', 'link_sample_data = LEFT,RIGHT,GAZE,HREF,AREA');
+                Eyelink('command','file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
+                Eyelink('command','link_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
+                Eyelink('command', 'file_sample_data = LEFT,RIGHT,GAZE,HREF,AREA,HTARGET,GAZERS,STATUS,INPUT');
+                Eyelink('command', 'link_sample_data = LEFT,RIGHT,GAZE,GAZERS,AREA,HTARGET,STATUS,INPUT');
                 
                 % open file to record data to
                 edfFile='recdata.edf';
@@ -687,6 +692,8 @@ end
 if eye==1
     Eyelink('StopRecording');
     WaitSecs(.1);
+    Eyelink('Command', 'set_idle_mode');
+    WaitSecs(0.5);
     Eyelink('CloseFile');
     
     % download data file
@@ -707,7 +714,7 @@ if eye==1
     
     if dummymode==0
         movefile('recdata.edf',strcat('Output/', subjid,'_dots_practice_run',num2str(run),'_',timestamp,'.edf'));
-    end;
+    end
 end
 
 CenterText(win,'Thank you! Great job!', white,0,-100);
@@ -727,6 +734,10 @@ function cleanup
 % finish up: stop recording eye-movements,
 % close graphics window, close data file and shut down tracker
 Eyelink('Stoprecording');
+WaitSecs(0.1);
+Eyelink('Command', 'set_idle_mode');
+WaitSecs(0.5);
+
 Eyelink('CloseFile');
 Eyelink('Shutdown');
 

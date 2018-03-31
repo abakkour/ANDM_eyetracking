@@ -51,7 +51,7 @@ function food_choice(subjectID, numRun, use_eyetracker)
 % numRun = 1;
 % trialsPerRun = 8; % for debugging
 
-rng shuffle
+rng('Default')
 
 % =========================================================================
 % Get input args and check if input is ok
@@ -114,8 +114,8 @@ first_fixation_area = 'x';
 %==============================================
 %% 'INITIALIZE Screen variables'
 %==============================================
-Screen('Preference', 'VisualDebuglevel', 3); %No PTB intro screen
-Screen('Preference', 'SkipSyncTests', 1); %ONLY FOR TESTING
+Screen('Preference', 'VisualDebuglevel', 0); %No PTB intro screen
+%Screen('Preference', 'SkipSyncTests', 1); %ONLY FOR TESTING
 screennum = min(Screen('Screens'));
 
 pixelSize = 32;
@@ -262,12 +262,22 @@ if use_eyetracker
     [~, vs]=Eyelink('GetTrackerVersion');
     fprintf('Running experiment on a ''%s'' tracker.\n', vs );
     
-    % make sure that we get gaze data from the Eyelink
-    Eyelink('Command', 'link_sample_data = LEFT,RIGHT,GAZE,HREF,AREA');
-    
     % open file to record data to
     edfFile='probe.edf';
-    Eyelink('Openfile', edfFile);
+    i=Eyelink('Openfile', edfFile);
+    
+    if i~=0
+        fprint('Cannot create EDF file ''%s'' ', edfFile);
+        Eyelink('Shutdown');
+        sca;
+        return;
+    end
+    
+    % make sure that we get gaze data from the Eyelink
+    Eyelink('command','file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
+    Eyelink('command','link_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
+    Eyelink('command', 'file_sample_data = LEFT,RIGHT,GAZE,HREF,AREA,HTARGET,GAZERS,STATUS,INPUT');
+    Eyelink('command', 'link_sample_data = LEFT,RIGHT,GAZE,GAZERS,AREA,HTARGET,STATUS,INPUT');
     
     % STEP 4
     % Calibrate the eye tracker
@@ -372,8 +382,10 @@ runStart = GetSecs;
 if use_eyetracker
     % start recording eye position
     %---------------------------
+    Eyelink('Command', 'set_idle_mode');
+    WaitSecs(0.05);
     Eyelink('StartRecording');
-    WaitSecs(.05);
+    WaitSecs(.1);
     
     %   Eyelink MSG
     % ---------------------------
@@ -404,7 +416,8 @@ for trial = 1:trialsPerRun
     %-----------------------------------------------------------------
     Screen('PutImage',w,Images{stimnum1(trial)}, leftRect);
     Screen('PutImage',w,Images{stimnum2(trial)}, rightRect);
-    eyelink_message=['block: ' num2str(block), ' run: ' num2str(numRun),' trial: ',num2str(trial),', StimLeft: ',stimName{stimnum1(trial)},' StimRight: ',stimName{stimnum2(trial)},' time: ',num2str(GetSecs)];
+    %eyelink_message=['block: ' num2str(block), ' run: ' num2str(numRun),' trial: ',num2str(trial),', StimLeft: ',stimName{stimnum1(trial)},' StimRight: ',stimName{stimnum2(trial)},' time: ',num2str(GetSecs)];
+    eyelink_message=['run: ' num2str(numRun),' trial: ',num2str(trial)];
     
     if use_eyetracker
         %   Eyelink MSG
@@ -664,6 +677,8 @@ if use_eyetracker
     % close graphics window, close data file and shut down tracker
     Eyelink('StopRecording');
     WaitSecs(.1);
+    Eyelink('Command', 'set_idle_mode');
+    WaitSecs(0.5);
     Eyelink('CloseFile');
     
     
@@ -685,7 +700,7 @@ if use_eyetracker
     
     if dummymode==0
         movefile(edfFile,['./Output/', subjectID,'_Food_Choice_EyeTracking_run_',num2str(numRun),'_' timestamp,'.edf']);
-    end;
+    end
 end
 
 %-----------------------------------------------------------------

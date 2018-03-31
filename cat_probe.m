@@ -51,7 +51,7 @@ function cat_probe(subjectID, order, run, use_eyetracker)
 % numRun = 1;
 % trialsPerRun = 8; % for debugging
 
-rng shuffle
+rng('default')
 
 % =========================================================================
 % Get input args and check if input is ok
@@ -101,8 +101,8 @@ first_fixation_area = 'x';
 %==============================================
 %% 'INITIALIZE Screen variables'
 %==============================================
-Screen('Preference', 'VisualDebuglevel', 3); %No PTB intro screen
-Screen('Preference', 'SkipSyncTests', 1); %ONLY FOR TESTING
+Screen('Preference', 'VisualDebuglevel', 0); %No PTB intro screen
+%Screen('Preference', 'SkipSyncTests', 1); %ONLY FOR TESTING
 screennum = min(Screen('Screens'));
 
 pixelSize = 32;
@@ -265,7 +265,7 @@ CenterText(w,'and a different food picture on the right.',white, 0, -250);
 CenterText(w,'For each trial, indicate whether you `Prefer`',white, 0, -200);
 CenterText(w,'the food on the left by pressing the `u` key or instead',white, 0, -150);
 CenterText(w,'`Prefer` the food on the right by pressing `i` the key.',white, 0, -100);
-CenterText(w,'as you will be asked to eat a snack sized portion',white, 0, -50);
+CenterText(w,'You will be asked to eat a snack sized portion',white, 0, -50);
 CenterText(w,'of one of your preferred items, randomly selected at the end of the task.',white, 0, 0);
 CenterText(w,'That is, your choice on one trial, randomly selected,',white, 0, 50);
 CenterText(w,'will determine the snack you eat today.',white, 0, 100);
@@ -329,6 +329,8 @@ for numRun=run:2
     if use_eyetracker
         % start recording eye position
         %---------------------------
+        Eyelink('Command', 'set_idle_mode');
+        WaitSecs(0.05);
         Eyelink('StartRecording');
         WaitSecs(.05);
         
@@ -636,6 +638,8 @@ for numRun=run:2
         % close graphics window, close data file and shut down tracker
         Eyelink('StopRecording');
         WaitSecs(.1);
+        Eyelink('Command', 'set_idle_mode');
+        WaitSecs(0.5);
         Eyelink('CloseFile');
         
         

@@ -17,7 +17,7 @@ function food_rating(subjectID,run,use_eyetracker)
 outputPath = 'Output/';
 
 % essential for randomization
-rng('shuffle');
+rng('default');
 
 % about timing
 c = clock;
@@ -40,8 +40,8 @@ first_fixation_duration=999;
 %% 'INITIALIZE SCREEN'
 % -----------------------------------------------
 
-Screen('Preference', 'VisualDebuglevel', 3); %No PTB intro screen
-Screen('Preference', 'SkipSyncTests', 1); %ONLY FOR TESTING
+Screen('Preference', 'VisualDebuglevel', 0); %No PTB intro screen
+%Screen('Preference', 'SkipSyncTests', 1); %ONLY FOR TESTING
 screennum = min(Screen('Screens')); %select external screen
 
 pixelSize=32;
@@ -119,8 +119,11 @@ if use_eyetracker
     [~,vs]=Eyelink('GetTrackerVersion');
     fprintf('Running experiment on a ''%s'' tracker.\n', vs );
     
-    % make sure that we get gaze data from the Eyelink
-    Eyelink('Command', 'link_sample_data = LEFT,RIGHT,GAZE,HREF,AREA');
+        % make sure that we get gaze data from the Eyelink
+    Eyelink('command','file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
+    Eyelink('command','link_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
+    Eyelink('command', 'file_sample_data = LEFT,RIGHT,GAZE,HREF,AREA,HTARGET,GAZERS,STATUS,INPUT');
+    Eyelink('command', 'link_sample_data = LEFT,RIGHT,GAZE,GAZERS,AREA,HTARGET,STATUS,INPUT');
     
     % open file to record data to
     edfFile=['ratingr' num2str(run) '.edf'];
@@ -181,6 +184,8 @@ runStartTime=Screen(w,'Flip');
 if use_eyetracker
     % start recording eye position
     %---------------------------
+    Eyelink('Command', 'set_idle_mode');
+    WaitSecs(0.05);
     Eyelink('StartRecording');
     WaitSecs(.05);
 
@@ -301,9 +306,9 @@ for trialNum = 1:length(shuff_names)   % To cover all the items in one run.
             last_area = current_area;
             fixation_duration = GetSecs-fixation_onset_time;
         end
-        
+            
         % Get the current position of the mouse
-        [mx, my,buttons] = GetMouse(w);
+        [mx, my, buttons] = GetMouse(w);
         
         % See if the mouse cursor is inside the square
         inside = IsInRect(mx, my, centeredRect);
@@ -374,7 +379,7 @@ for trialNum = 1:length(shuff_names)   % To cover all the items in one run.
     
     WaitSecs(1); %1 sec ITI
     
-end; %	End the big trialNum loop showing all the images in one run.
+end %	End the big trialNum loop showing all the images in one run.
 
 
 %---------------------------------------------------------------
@@ -401,6 +406,8 @@ if use_eyetracker
     % close graphics window, close data file and shut down tracker
     Eyelink('StopRecording');
     WaitSecs(.1);
+    Eyelink('Command', 'set_idle_mode');
+    WaitSecs(0.5);
     Eyelink('CloseFile');
     
     % download data file
@@ -421,7 +428,7 @@ if use_eyetracker
     
     if dummymode==0
         movefile(edfFile,['./Output/', subjectID,'_food_rating_run_',num2str(run),'_',timestamp,'.edf']);
-    end;
+    end
 end
 
 %   outgoing msg & closing
@@ -431,7 +438,7 @@ CenterText(w,'Please get the experimenter when you are ready.', white, 0, 100);
 Screen('Flip',w);
 
 WaitSecs(4);
-
+ListenChar(0);
 Screen('CloseAll');
 
 end

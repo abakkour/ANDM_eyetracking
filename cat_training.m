@@ -4,6 +4,7 @@ function cat_training(subjectID,order,use_eyetracker,block)
 % =============== Created based on the previous boost codes ===============
 % ==================== by Tom Salomon, September 2014 =====================
 % ================= modified by Akram Bakkour, June 2016 ==================
+% cat_training(subjectID,order,use_eyetracker,block)
 % = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 % This function runs the boost (cue-approach) training session,
@@ -69,7 +70,7 @@ total_number_of_runs=12;
 outputPath = [mainPath '/Output'];
 
 % essential for randomization
-rng('shuffle');
+rng('Default');
 
 % about timing
 c = clock;
@@ -93,8 +94,8 @@ trial_num_food_fixations=999;
 %% 'INITIALIZE SCREEN'
 % -----------------------------------------------
 
-Screen('Preference', 'VisualDebuglevel', 3); %No PTB intro screen
-Screen('Preference', 'SkipSyncTests', 1); %FOR TESTING ONLY
+Screen('Preference', 'VisualDebuglevel', 0); %No PTB intro screen
+%Screen('Preference', 'SkipSyncTests', 1); %FOR TESTING ONLY
 screennum = min(Screen('Screens'));
 
 pixelSize=32;
@@ -173,13 +174,16 @@ if use_eyetracker
         fprintf('Eyelink Init aborted.\n');
         cleanup;  % cleanup function
         return;
-    end;
+    end
     
     [~,vs]=Eyelink('GetTrackerVersion');
     fprintf('Running experiment on a ''%s'' tracker.\n', vs );
     
-    % make sure that we get gaze data from the Eyelink
-    Eyelink('Command', 'link_sample_data = LEFT,RIGHT,GAZE,HREF,AREA');
+        % make sure that we get gaze data from the Eyelink
+    Eyelink('command','file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
+    Eyelink('command','link_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
+    Eyelink('command', 'file_sample_data = LEFT,RIGHT,GAZE,HREF,AREA,HTARGET,GAZERS,STATUS,INPUT');
+    Eyelink('command', 'link_sample_data = LEFT,RIGHT,GAZE,GAZERS,AREA,HTARGET,STATUS,INPUT');
     
     % open file to record data to
     edfFile=['train',num2str(block),'.edf'];
@@ -313,6 +317,8 @@ shuff_bidValues = cell(1,num_runs_per_block);
 anchor = GetSecs ; % (before baseline fixation) ;
 
 if use_eyetracker
+    Eyelink('Command', 'set_idle_mode');
+    WaitSecs(0.05);
     % start recording eye position
     %---------------------------
     Eyelink('StartRecording');
@@ -1030,6 +1036,8 @@ if use_eyetracker
     % close graphics window, close data file and shut down tracker
     Eyelink('StopRecording');
     WaitSecs(.1);
+    Eyelink('Command', 'set_idle_mode');
+    WaitSecs(0.5);
     Eyelink('CloseFile');
     
     
@@ -1051,7 +1059,7 @@ if use_eyetracker
     
     if dummymode==0
         movefile(edfFile,strcat(outputPath, '/', subjectID,'_cat_training_run', sprintf('%02d',runNum-num_runs_per_block+1),'_to_run', sprintf('%02d',runNum),'_', timestamp,'.edf'));
-    end;
+    end
 end
 
 %   outgoing msg & closing

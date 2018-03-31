@@ -25,7 +25,7 @@ function ColorDots_test(subjid,test_comp,exp_init,eye,scan,run,button_order)
 % Feb 2016 modified by AB. ab4096 at columbia dot edu.
 
 Screen('Preference', 'VisualDebugLevel', 0);
-Screen('Preference', 'SkipSyncTests', 1); %FOR TESTING ONLY
+%Screen('Preference', 'SkipSyncTests', 1); %FOR TESTING ONLY
 
 c=clock;
 hr=num2str(c(4));
@@ -95,9 +95,11 @@ if eye==1
     [~, vs]=Eyelink('GetTrackerVersion');
     fprintf('Running experiment on a ''%s'' tracker.\n', vs );
     
-    % make sure that we get gaze data from the Eyelink
-    Eyelink('command', 'link_event_data = GAZE,GAZERES,HREF,AREA,VELOCITY');
-    Eyelink('Command', 'link_sample_data = LEFT,RIGHT,GAZE,HREF,AREA');
+        % make sure that we get gaze data from the Eyelink
+    Eyelink('command','file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
+    Eyelink('command','link_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
+    Eyelink('command', 'file_sample_data = LEFT,RIGHT,GAZE,HREF,AREA,HTARGET,GAZERS,STATUS,INPUT');
+    Eyelink('command', 'link_sample_data = LEFT,RIGHT,GAZE,GAZERS,AREA,HTARGET,STATUS,INPUT');
     
     % open file to record data to
     edfFile='recdata.edf';
@@ -244,6 +246,8 @@ end
 if eye==1
     % STEP 5
     % start recording eye position
+    Eyelink('Command', 'set_idle_mode');
+    WaitSecs(0.05);
     Eyelink('StartRecording');
     % record a few samples before we actually start displaying
     WaitSecs(0.1);
@@ -518,6 +522,9 @@ function cleanup
 % finish up: stop recording eye-movements,
 % close graphics window, close data file and shut down tracker
 Eyelink('Stoprecording');
+WaitSecs(0.1);
+Eyelink('Command', 'set_idle_mode');
+WaitSecs(0.5);
 Eyelink('CloseFile');
 Eyelink('Shutdown');
 
@@ -525,7 +532,7 @@ Eyelink('Shutdown');
 Screen('CloseAll');
 
 % Restore keyboard output to Matlab:
-%ListenChar(0);
+ListenChar(0);
 ShowCursor;
 end
 
