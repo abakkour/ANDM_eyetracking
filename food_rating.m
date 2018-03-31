@@ -433,6 +433,7 @@ if use_eyetracker
     
     
     if dummymode==0
+        WaitSecs(1);
         movefile(edfFile,['./Output/', subjectID,'_food_rating_run_',num2str(run),'_',timestamp,'.edf']);
     end
 end
