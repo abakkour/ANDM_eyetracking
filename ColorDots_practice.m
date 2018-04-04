@@ -100,7 +100,7 @@ if eye==1
     Eyelink('command', 'link_sample_data = LEFT,RIGHT,GAZE,HREF,AREA');
     
     % open file to record data to
-    edfFile='recdata.edf';
+    edfFile='dotsp1.edf';
     Eyelink('Openfile', edfFile);
     
     % STEP 4
@@ -482,7 +482,7 @@ for c=1:5
             a=0;
         elseif c==4 && trial >= 40 && nanmean(outcomes(trial-9:trial))>=.8
             a=0;
-        elseif trial== 200
+        elseif trial >= 200
             a=0;
         end
         
@@ -526,7 +526,7 @@ for c=1:5
                     
                     
                     if dummymode==0
-                        movefile('recdata.edf',strcat('Output/', subjid,'_dots_practice_run',num2str(run),'_',timestamp,'.edf'));
+                        movefile(edfFile,strcat('Output/', subjid,'_dots_practice_run',num2str(run),'_',timestamp,'.edf'));
                     end;
                 end
             end
@@ -580,7 +580,7 @@ for c=1:5
                 Eyelink('command', 'link_sample_data = LEFT,RIGHT,GAZE,GAZERS,AREA,HTARGET,STATUS,INPUT');
                 
                 % open file to record data to
-                edfFile='recdata.edf';
+                edfFile='dotsp2.edf';
                 i=Eyelink('Openfile', edfFile);
                 
                 if i~=0
@@ -720,7 +720,7 @@ if eye==1
     end
     
     if dummymode==0
-        movefile('recdata.edf',strcat('Output/', subjid,'_dots_practice_run',num2str(run),'_',timestamp,'.edf'));
+        movefile(edfFile,strcat('Output/', subjid,'_dots_practice_run',num2str(run),'_',timestamp,'.edf'));
     end
 end
 

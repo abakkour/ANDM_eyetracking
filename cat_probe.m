@@ -232,7 +232,7 @@ if use_eyetracker
     Eyelink('Command', 'link_sample_data = LEFT,RIGHT,GAZE,HREF,AREA');
     
     % open file to record data to
-    edfFile='catprobe.edf';
+    edfFile='catpr1.edf';
     Eyelink('Openfile', edfFile);
     
     % STEP 4
@@ -290,6 +290,12 @@ KbPressWait(-1);
 
 for numRun=run:2
     
+    if numRun==2
+        edfFile='catpr2.edf';
+        Eyelink('Openfile', edfFile);
+        WaitSecs(0.1);
+    end
+
     %   'read in organized list of stimuli for this run'
     % - - - - - - - - - - - - - - - - - - - - - - - - - -
     

@@ -263,7 +263,7 @@ if use_eyetracker
     fprintf('Running experiment on a ''%s'' tracker.\n', vs );
     
     % open file to record data to
-    edfFile='probe.edf';
+    edfFile=['foodch' num2str(numRun) '.edf'];
     i=Eyelink('Openfile', edfFile);
     
     if i~=0

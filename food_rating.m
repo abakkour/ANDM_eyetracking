@@ -126,7 +126,7 @@ if use_eyetracker
     Eyelink('command', 'link_sample_data = LEFT,RIGHT,GAZE,GAZERS,AREA,HTARGET,STATUS,INPUT');
     
     % open file to record data to
-    edfFile=['ratingr' num2str(run) '.edf'];
+    edfFile=['rating' num2str(run) '.edf'];
     i=Eyelink('Openfile', edfFile);
         if i~=0
         fprint('Cannot create EDF file ''%s'' ', edfFile);

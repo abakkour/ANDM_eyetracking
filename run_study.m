@@ -32,28 +32,28 @@ while isempty(use_eye) || sum(okuse_eye==use_eye)~=1
 end
 
 %%MODIFY IF NEEDED
-%2 runs of food_rating
+%%2 runs of food_rating
 for run=1:2
-     food_rating(subjectID,run,use_eye);
- end
- %do all the sorting and forming of choice pairs
- sort_ratings(subjectID,order);
- cat_form_probe_pairs(subjectID, order, 2); %2 repetitions of each unique choice pair for CAT_probe
- form_food_choice_pairs(subjectID, order,3); %split 210 choice trials into 3 runs
- 
- for block=1:6
-      cat_training(subjectID,order,use_eye,block);
- end
-   
- ColorDots_practice(subjectID,test_comp,exp_init,use_eye,0,order);
- 
+    food_rating(subjectID,run,use_eye);
+end
+%%do all the sorting and forming of choice pairs
+sort_ratings(subjectID,order);
+cat_form_probe_pairs(subjectID, order, 2); %2 repetitions of each unique choice pair for CAT_probe
+form_food_choice_pairs(subjectID, order,3); %split 210 choice trials into 3 runs
+
+for block=1:6
+    cat_training(subjectID,order,use_eye,block);
+end
+
+ColorDots_practice(subjectID,test_comp,exp_init,use_eye,0,order);
+
 cat_probe(subjectID, order, 1, use_eye);
 
- for run=1:3
-     food_choice(subjectID, run, use_eye)
- end
- 
- for run=1:3
+for run=1:3
+    food_choice(subjectID, run, use_eye)
+end
+
+for run=1:3
     ColorDots_test(subjectID,test_comp,exp_init,use_eye,0,run,order)
- end
+end
 

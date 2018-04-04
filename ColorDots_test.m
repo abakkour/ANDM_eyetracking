@@ -102,7 +102,7 @@ if eye==1
     Eyelink('command', 'link_sample_data = LEFT,RIGHT,GAZE,GAZERS,AREA,HTARGET,STATUS,INPUT');
     
     % open file to record data to
-    edfFile='recdata.edf';
+    edfFile=['dotst' num2str(run) '.edf'];
     i=Eyelink('Openfile', edfFile);
     if i~=0
         fprint('Cannot create EDF file ''%s'' ', edfFile);
@@ -500,7 +500,7 @@ if eye==1
     
     
     if dummymode==0
-        movefile('recdata.edf',strcat('Output/', subjid,'_dots_test_run_', num2str(run), '_', timestamp,'.edf'));
+        movefile(edfFile,strcat('Output/', subjid,'_dots_test_run_', num2str(run), '_', timestamp,'.edf'));
     end;
 end
 
